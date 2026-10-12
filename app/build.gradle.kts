@@ -36,6 +36,11 @@ android {
 }
 
 dependencies {
+    val roomVersion = "2.6.1" // Usa la versión estable actual
+
+    implementation("androidx.room:room-runtime:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
