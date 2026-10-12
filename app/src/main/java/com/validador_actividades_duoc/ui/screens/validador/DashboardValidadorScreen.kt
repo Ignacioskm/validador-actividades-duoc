@@ -1,3 +1,12 @@
 package com.validador_actividades_duoc.ui.screens.validador
 
-// Lo mismo de atras per ocon el flujo de los departamentos
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+
+@Composable
+fun DashboardValidadorScreen(
+    onCerrarSesion: () -> Unit,
+    onIrAInventarioClick: () -> Unit
+) {
+    Text(text = "Dashboard Validador (En construcción)")
+}
