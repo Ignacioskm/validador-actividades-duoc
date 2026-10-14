@@ -36,6 +36,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.androidx.work.runtime.ktx)
     val roomVersion = "2.6.1" // Usa la versión estable actual
 
     implementation("androidx.room:room-runtime:$roomVersion")
