@@ -1,7 +1,5 @@
 package com.validador_actividades_duoc.data.local.entity
 
-// Comentario 2 de ejemplo ASDASDASDAWDAS
-
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.ForeignKey
