@@ -6,5 +6,7 @@ import androidx.room.Relation
 data class ReservaConRequerimientos(
     @Embedded val reserva: ReservaEntity,
     @Relation(entity = RequerimientoEntity::class, parentColumn = "id", entityColumn = "reservaId")
-    val requerimientos: List<RequerimientoConRecurso>
+    val requerimientos: List<RequerimientoConRecurso>,
+    @Relation(parentColumn = "solicitanteId", entityColumn = "id")
+    val solicitante: UsuarioEntity
 )

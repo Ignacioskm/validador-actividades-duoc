@@ -18,7 +18,7 @@ import com.validador_actividades_duoc.data.local.entity.UsuarioEntity
         RecursoInventarioEntity::class,
         RequerimientoEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

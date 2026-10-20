@@ -21,6 +21,7 @@ import com.validador_actividades_duoc.domain.model.EstadoRequerimiento
 import com.validador_actividades_duoc.domain.model.EstadoReserva
 import com.validador_actividades_duoc.ui.theme.DuocBlackCharcoal
 import com.validador_actividades_duoc.ui.theme.DuocTheme
+import com.validador_actividades_duoc.ui.theme.DuocYellow
 import com.validador_actividades_duoc.ui.theme.StatusApproved
 import com.validador_actividades_duoc.ui.theme.StatusPending
 import com.validador_actividades_duoc.ui.theme.StatusRejected
@@ -64,6 +65,7 @@ fun StatusBadge(
 ) {
     val (colorFondo, colorTexto, nomEstado) = when (estado) {
         EstadoReserva.PENDIENTE -> Triple(StatusPending, DuocBlackCharcoal, "Pendiente")
+        EstadoReserva.PENDIENTE_ADMIN -> Triple(DuocYellow, DuocBlackCharcoal, "Revisión final")
         EstadoReserva.CONFIRMADA -> Triple(StatusApproved, DuocBlackCharcoal, "Confirmada")
         EstadoReserva.RECHAZADA -> Triple(StatusRejected, DuocBlackCharcoal, "Rechazada")
     }
