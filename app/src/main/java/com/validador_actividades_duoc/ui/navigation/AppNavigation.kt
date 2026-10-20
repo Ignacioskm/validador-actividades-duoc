@@ -12,16 +12,15 @@ import com.validador_actividades_duoc.ui.screens.auth.LoginScreen
 import com.validador_actividades_duoc.ui.screens.solicitante.CalendarioScreen
 import com.validador_actividades_duoc.ui.screens.validador.DashboardValidadorScreen
 import com.validador_actividades_duoc.ui.screens.admin.ResumenEventosScreen
+import com.validador_actividades_duoc.ui.screens.validador.GestionInventarioScreen
+import com.validador_actividades_duoc.ui.screens.validador.ValidadorViewModel
 
 sealed class Ruta(val ruta:String) {
 
-    //De momento pondré rutas basicas aca, creo que están todas.
     object Login: Ruta("Login")
     object Solicitante: Ruta("solicitante_calendario")
     object Validador: Ruta("validador_dashboard")
     object Admin: Ruta("admin_resumen")
-
-    object FormularioReserva: Ruta("solicitante_formulario")
     object GestionInventario: Ruta("validador_inventario")
 }
 
@@ -29,19 +28,9 @@ sealed class Ruta(val ruta:String) {
 fun AppNavigation(authViewModel: AuthViewModel){
 
     val navController = rememberNavController()
-    val usuarioActual by authViewModel.usuarioActual.collectAsState()
-
-    val rutaInicial  = when (usuarioActual?.rol){
-        null -> Ruta.Login.ruta
-        RolUsuario.SOLICITANTE -> Ruta.Solicitante.ruta
-        RolUsuario.VALIDADOR -> Ruta.Validador.ruta
-        RolUsuario.ADMIN-> Ruta.Admin.ruta
-    }
-
-    //NavHost es el contenedor de todas las pantallas
     NavHost(
         navController = navController,
-        startDestination = rutaInicial
+        startDestination = Ruta.Login.ruta
     ) {
         composable(Ruta.Login.ruta){
             LoginScreen(
@@ -53,7 +42,8 @@ fun AppNavigation(authViewModel: AuthViewModel){
                         RolUsuario.ADMIN -> Ruta.Admin.ruta
                     }
                     navController.navigate(destino) {
-                        popUpTo(Ruta.Login.ruta){ inclusive = true}
+                        // Limpiamos el historial para que al dar "Atrás" no vuelva al login
+                        popUpTo(Ruta.Login.ruta) { inclusive = true }
                     }
                 }
             )
@@ -64,26 +54,36 @@ fun AppNavigation(authViewModel: AuthViewModel){
                 onCerrarSesion = {
                     authViewModel.cerrarSesion()
                     navController.navigate(Ruta.Login.ruta){
-                        popUpTo(0)
+                        popUpTo(0) { inclusive = true }
                     }
                 },
                 onNuevaReservaClick = {
-                    //Esta se descomenta cuando la tengamos
-                    //navController.navigate(Ruta.FormularioReserva.ruta)
+                    // navController.navigate(Ruta.FormularioReserva.ruta)
                 }
             )
         }
 
         composable(Ruta.Validador.ruta) {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val database = com.validador_actividades_duoc.data.local.AppContainer.provideDatabase(context)
+
+            // Obtenemos el usuario actual del ViewModel para filtrar su departamento
+            val usuarioActual by authViewModel.usuarioActual.collectAsState()
+            val deptoUsuario = usuarioActual?.departamento ?: com.validador_actividades_duoc.domain.model.Departamento.AUXILIARES
+
+            val validadorViewModel = ValidadorViewModel(
+                reservaDao = database.reservaDao(),
+                departamentoValidador = deptoUsuario
+            )
+
             DashboardValidadorScreen(
+                viewModel = validadorViewModel,
                 onCerrarSesion = {
                     authViewModel.cerrarSesion()
-                    navController.navigate(Ruta.Login.ruta) {
-                        popUpTo(0)
-                    }
+                    navController.navigate(Ruta.Login.ruta) { popUpTo(0) { inclusive = true } }
                 },
                 onIrAInventarioClick = {
-                    // navController.navigate(Ruta.GestionInventario.ruta) // Se habilitará luego
+                    navController.navigate(Ruta.GestionInventario.ruta)
                 }
             )
         }
@@ -92,12 +92,15 @@ fun AppNavigation(authViewModel: AuthViewModel){
             ResumenEventosScreen(
                 onCerrarSesion = {
                     authViewModel.cerrarSesion()
-                    navController.navigate(Ruta.Login.ruta) {
-                        popUpTo(0)
-                    }
+                    navController.navigate(Ruta.Login.ruta) { popUpTo(0) { inclusive = true } }
                 }
             )
         }
 
+        composable(Ruta.GestionInventario.ruta) {
+            GestionInventarioScreen(
+                onVolver = { navController.popBackStack() }
+            )
+        }
     }
 }
