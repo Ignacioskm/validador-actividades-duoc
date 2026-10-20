@@ -25,5 +25,6 @@ data class ReservaEntity(
     val bloqueInicio: Int,      // índice 1..13
     val bloqueFin: Int,         // índice 1..13 (rango continuo)
     val estado: EstadoReserva = EstadoReserva.PENDIENTE,
+    val motivoRechazo: String? = null,
     val fechaCreacion: Long = System.currentTimeMillis()
 )

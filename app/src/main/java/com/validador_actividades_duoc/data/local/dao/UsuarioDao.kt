@@ -13,11 +13,11 @@ interface UsuarioDao {
     suspend fun insertarUsuario(usuario: UsuarioEntity): Long
 
     @Query("SELECT * FROM usuarios WHERE id = :usuarioId")
-    suspend fun obtenerUsuarioPorId(usuarioId: Int): UsuarioEntity?
+    suspend fun obtenerUsuarioPorId(usuarioId: Long): UsuarioEntity?
 
     @Query("SELECT * FROM usuarios WHERE correo = :email LIMIT 1")
     suspend fun obtenerUsuarioPorEmail(email: String): UsuarioEntity?
 
-    @Query("SELECT * FROM usuarios")
-    suspend fun obtenerTodosLosUsuarios(): List<UsuarioEntity>
+    @Query("SELECT COUNT(*) FROM usuarios")
+    suspend fun contar(): Int
 }
