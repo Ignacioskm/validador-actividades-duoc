@@ -410,3 +410,19 @@ fun TarjetaBloqueHorario(
         }
     }
 }
+
+@Preview(showBackground = true, name = "Calendario - Modo Claro")
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, name = "Calendario - Modo Oscuro")
+@Composable
+fun CalendarioScreenPreview() {
+    DuocTheme {
+        Surface {
+            CalendarioScreen(
+                solicitanteId = 1L,
+                nombreUsuario = "Carlos Gómez",
+                onAbrirWizard = {},
+                onCerrarSesion = {}
+            )
+        }
+    }
+}
