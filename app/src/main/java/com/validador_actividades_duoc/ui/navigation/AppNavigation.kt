@@ -2,6 +2,7 @@ package com.validador_actividades_duoc.ui.navigation
 
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
@@ -9,6 +10,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.validador_actividades_duoc.data.local.AppContainer
 import com.validador_actividades_duoc.data.local.entity.UsuarioEntity
 import com.validador_actividades_duoc.domain.model.RolUsuario
 import com.validador_actividades_duoc.ui.screens.admin.AdminViewModel
@@ -16,7 +18,10 @@ import com.validador_actividades_duoc.ui.screens.admin.AdminViewModelFactory
 import com.validador_actividades_duoc.ui.screens.admin.ResumenEventosScreen
 import com.validador_actividades_duoc.ui.screens.auth.AuthViewModel
 import com.validador_actividades_duoc.ui.screens.auth.LoginScreen
-//import com.validador_actividades_duoc.ui.screens.solicitante.CalendarioScreen
+import com.validador_actividades_duoc.ui.screens.solicitante.FormularioWizardScreen
+import com.validador_actividades_duoc.ui.screens.solicitante.CalendarioScreen
+import com.validador_actividades_duoc.ui.screens.solicitante.SolicitanteViewModel
+import com.validador_actividades_duoc.ui.screens.solicitante.SolicitanteViewModelFactory
 import com.validador_actividades_duoc.ui.screens.validador.DashboardValidadorScreen
 import com.validador_actividades_duoc.ui.screens.validador.GestionInventarioScreen
 import com.validador_actividades_duoc.ui.screens.validador.ValidadorViewModel
@@ -25,6 +30,8 @@ import com.validador_actividades_duoc.ui.screens.validador.ValidadorViewModelFac
 sealed class Ruta(val ruta: String) {
     object Login : Ruta("login")
     object Solicitante : Ruta("solicitante_calendario")
+
+    object Formulario : Ruta("solicitante_formulario")
     object Validador : Ruta("validador_dashboard")
     object Admin : Ruta("admin_resumen")
     object GestionInventario : Ruta("validador_inventario")
@@ -41,7 +48,7 @@ private fun rememberValidadorViewModel(validador: UsuarioEntity): ValidadorViewM
 
 @Composable
 fun AppNavigation(authViewModel: AuthViewModel) {
-
+    val context = LocalContext.current.applicationContext
     val navController = rememberNavController()
 
     val cerrarSesion: () -> Unit = {
@@ -67,16 +74,56 @@ fun AppNavigation(authViewModel: AuthViewModel) {
             )
         }
 
-        /*
+
         composable(Ruta.Solicitante.ruta) {
+            val usuario by authViewModel.usuarioActual.collectAsState()
+            val solicitante = usuario ?: return@composable
+
+            if(solicitante.rol != RolUsuario.SOLICITANTE){
+                Text("Acceso no autorizadska")
+            }
+
+            val solicitanteViewModel: SolicitanteViewModel = viewModel(
+                factory = SolicitanteViewModelFactory(
+                    AppContainer.provideReservaRepository(context),
+                    AppContainer.provideInventarioRepository(context)
+
+                )
+            )
+
             CalendarioScreen(
-                onCerrarSesion = cerrarSesion,
-                onNuevaReservaClick = {
-                    // Persona 2: navController.navigate(Ruta.Formulario...)
-                }
+                solicitanteId = solicitante.id,
+                nombreUsuario = solicitante.nombre,
+                viewModel = solicitanteViewModel,
+                onAbrirWizard = {navController.navigate(Ruta.Formulario.ruta)},
+                onCerrarSesion = cerrarSesion
             )
         }
-         */
+
+        composable(Ruta.Formulario.ruta) {
+            val usuario by authViewModel.usuarioActual.collectAsState()
+            val solicitante = usuario ?: return@composable
+
+
+            val solicitanteViewModel: SolicitanteViewModel = viewModel(
+                factory = SolicitanteViewModelFactory(
+                    AppContainer.provideReservaRepository(context),
+                    AppContainer.provideInventarioRepository(context)
+
+                )
+            )
+
+            LaunchedEffect(solicitante.id) {
+                solicitanteViewModel.inicializarSolicitante(solicitante.id)
+            }
+
+            FormularioWizardScreen(
+                viewModel = solicitanteViewModel,
+                onVolverCalendario = {navController.popBackStack()}
+            )
+
+        }
+
 
         composable(Ruta.Validador.ruta) {
             val usuario by authViewModel.usuarioActual.collectAsState()
