@@ -11,6 +11,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.validador_actividades_duoc.data.local.entity.UsuarioEntity
 import com.validador_actividades_duoc.domain.model.RolUsuario
+import com.validador_actividades_duoc.ui.screens.admin.AdminViewModel
+import com.validador_actividades_duoc.ui.screens.admin.AdminViewModelFactory
 import com.validador_actividades_duoc.ui.screens.admin.ResumenEventosScreen
 import com.validador_actividades_duoc.ui.screens.auth.AuthViewModel
 import com.validador_actividades_duoc.ui.screens.auth.LoginScreen
@@ -101,7 +103,15 @@ fun AppNavigation(authViewModel: AuthViewModel) {
         }
 
         composable(Ruta.Admin.ruta) {
-            ResumenEventosScreen(onCerrarSesion = cerrarSesion)
+            val context = LocalContext.current.applicationContext
+            val adminViewModel: AdminViewModel = viewModel(
+                factory = AdminViewModelFactory(context)
+            )
+
+            ResumenEventosScreen(
+                onCerrarSesion = cerrarSesion,
+                viewModel = adminViewModel
+            )
         }
     }
 }
