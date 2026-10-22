@@ -16,8 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.duocuc.reservas.domain.util.BLOQUES
-import com.duocuc.reservas.domain.util.BloqueHorario
+import com.validador_actividades_duoc.domain.util.BLOQUES
+import com.validador_actividades_duoc.domain.util.BloqueHorario
 import com.validador_actividades_duoc.ui.theme.DuocBlackCharcoal
 import com.validador_actividades_duoc.ui.theme.DuocTheme
 import com.validador_actividades_duoc.ui.theme.DuocYellow

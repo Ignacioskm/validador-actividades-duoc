@@ -16,7 +16,7 @@ import com.validador_actividades_duoc.ui.screens.admin.AdminViewModelFactory
 import com.validador_actividades_duoc.ui.screens.admin.ResumenEventosScreen
 import com.validador_actividades_duoc.ui.screens.auth.AuthViewModel
 import com.validador_actividades_duoc.ui.screens.auth.LoginScreen
-import com.validador_actividades_duoc.ui.screens.solicitante.CalendarioScreen
+//import com.validador_actividades_duoc.ui.screens.solicitante.CalendarioScreen
 import com.validador_actividades_duoc.ui.screens.validador.DashboardValidadorScreen
 import com.validador_actividades_duoc.ui.screens.validador.GestionInventarioScreen
 import com.validador_actividades_duoc.ui.screens.validador.ValidadorViewModel
@@ -67,6 +67,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
             )
         }
 
+        /*
         composable(Ruta.Solicitante.ruta) {
             CalendarioScreen(
                 onCerrarSesion = cerrarSesion,
@@ -75,6 +76,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
                 }
             )
         }
+         */
 
         composable(Ruta.Validador.ruta) {
             val usuario by authViewModel.usuarioActual.collectAsState()
