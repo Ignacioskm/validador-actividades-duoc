@@ -71,7 +71,7 @@ class ReservaRepository(private val db: AppDatabase) {
         }
     }
 
-    // 2. Un departamento aprueba or echaza unaactividad
+    // 2. Un departamento aprueba o rechaza una actividad
     suspend fun resolverArea(
         reservaId: Long,
         departamento: Departamento,
