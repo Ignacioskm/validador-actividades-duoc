@@ -24,7 +24,15 @@ class ReservaRepository(private val db: AppDatabase) {
     fun delSolicitante(id: Long) = reservaDao.observarPorSolicitante(id)
     fun deFecha(fecha: String) = reservaDao.observarDeFecha(fecha)
     fun solicitudesDeArea(depto: Departamento) = reservaDao.observarPendientesDeArea(depto)
-    fun pendientesDeAdmin() = reservaDao.observarPorEstado(EstadoReserva.PENDIENTE_ADMIN)
+    // fun pendientesDeAdmin() = reservaDao.observarPorEstado(EstadoReserva.PENDIENTE_ADMIN)
+
+    // ReservaRepository.kt
+
+    // Obtener todas las solicitudes pendientes de resolución final por el Admin (incluyendo las recién creadas)
+    fun pendientesDeAdmin(): Flow<List<ReservaConRequerimientos>> =
+        reservaDao.observarPorEstado(EstadoReserva.PENDIENTE, EstadoReserva.PENDIENTE_ADMIN)
+    // O si prefieres que vea absolutamente todas las que no están confirmadas ni rechazadas:
+    // reservaDao.observarTodas()
     fun confirmadas() = reservaDao.observarPorEstado(EstadoReserva.CONFIRMADA)
 
     // 1. El solicitante hace la reserva de la actividad.
@@ -98,13 +106,28 @@ class ReservaRepository(private val db: AppDatabase) {
     }
 
     /** Cualquier rechazo => RECHAZADA. Todos aprobados => PENDIENTE_ADMIN. Si no, sigue PENDIENTE. */
+    // ReservaRepository.kt
+
+    /**
+     * Cuando todas las áreas involucradas han emitido su decisión (Aprobado o Rechazado),
+     * la solicitud pasa a PENDIENTE_ADMIN para que el Administrador revise el estado
+     * de cada departamento y tome la decisión final.
+     */
     private suspend fun recalcularEstado(reservaId: Long) {
         val reqs = reservaDao.requerimientosDeReserva(reservaId)
+
+        // Verificamos si todos los requerimientos ya fueron procesados por sus áreas
+        val todasLasAreasRespondieron = reqs.none { it.estadoValidacion == EstadoRequerimiento.PENDIENTE }
+
         val nuevoEstado = when {
-            reqs.any { it.estadoValidacion == EstadoRequerimiento.RECHAZADO } -> EstadoReserva.RECHAZADA
-            reqs.all { it.estadoValidacion == EstadoRequerimiento.APROBADO } -> EstadoReserva.PENDIENTE_ADMIN
+            // Si todas las áreas respondieron (así hayan aprobado o rechazado algunas),
+            // pasa al Admin para la resolución final y envío de mensaje
+            todasLasAreasRespondieron -> EstadoReserva.PENDIENTE_ADMIN
+
+            // Si aún quedan departamentos por validar, sigue PENDIENTE
             else -> EstadoReserva.PENDIENTE
         }
+
         val motivo = reqs.firstOrNull { it.estadoValidacion == EstadoRequerimiento.RECHAZADO }?.motivoRechazo
         reservaDao.actualizarEstado(reservaId, nuevoEstado, motivo)
     }
@@ -121,8 +144,14 @@ class ReservaRepository(private val db: AppDatabase) {
     suspend fun rechazarPorAdmin(reservaId: Long, motivo: String): Result<Unit> = runCatching {
         require(motivo.isNotBlank()) { "Indica el motivo del rechazo" }
         db.withTransaction {
-            val reserva = reservaDao.obtenerPorId(reservaId)?.reserva ?: error("La solicitud no existe")
-            check(reserva.estado == EstadoReserva.PENDIENTE_ADMIN) { "Esta solicitud no está en revisión final" }
+            val reserva = reservaDao.obtenerPorId(reservaId)?.reserva
+                ?: error("La solicitud no existe")
+
+            check(reserva.estado == EstadoReserva.PENDIENTE_ADMIN || (reserva.estado == EstadoReserva.PENDIENTE)) {
+                "Esta solicitud no está en revisión final"
+            }
+
+            // Cambia el estado definitivamente a RECHAZADA y guarda el motivo del Admin
             reservaDao.actualizarEstado(reservaId, EstadoReserva.RECHAZADA, motivo.trim())
         }
     }

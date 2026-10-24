@@ -5,7 +5,6 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
-import androidx.room.Update
 import com.validador_actividades_duoc.data.local.entity.RequerimientoEntity
 import com.validador_actividades_duoc.data.local.entity.ReservaConRequerimientos
 import com.validador_actividades_duoc.data.local.entity.ReservaEntity
@@ -95,4 +94,10 @@ interface ReservaDao {
         ORDER BY r.fechaCreacion ASC
     """)
     fun observarPendientesDeArea(departamento: Departamento): Flow<List<ReservaConRequerimientos>>
+    @Transaction
+    @Query("SELECT * FROM reservas WHERE estado IN (:estado, :pendienteAdmin) ORDER BY fechaCreacion DESC")
+    fun observarPorEstado(
+        estado: EstadoReserva,
+        pendienteAdmin: EstadoReserva
+    ): Flow<List<ReservaConRequerimientos>>
 }
