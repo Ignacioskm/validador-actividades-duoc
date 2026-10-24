@@ -22,6 +22,7 @@ import com.validador_actividades_duoc.data.local.AppContainer
 import com.validador_actividades_duoc.data.local.entity.RecursoInventarioEntity
 import com.validador_actividades_duoc.data.local.entity.ReservaConRequerimientos
 import com.validador_actividades_duoc.domain.model.Departamento
+import com.validador_actividades_duoc.domain.model.EstadoRequerimiento
 import com.validador_actividades_duoc.domain.util.BLOQUES
 import com.validador_actividades_duoc.ui.components.DuocPrimaryButton
 import com.validador_actividades_duoc.ui.components.FormTextField
@@ -333,37 +334,95 @@ private fun TarjetaReservaAdmin(
     val hasta = BLOQUES.getOrNull(reserva.bloqueFin - 1)?.fin?.toString() ?: ""
 
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Fila superior: Nombre de la actividad y Badge general de la Reserva
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(reserva.nombreActividad, style = MaterialTheme.typography.titleMedium)
-                StatusBadge(estado = reserva.estado)
+                Text(
+                    text = reserva.nombreActividad,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.weight(1f)
+                )
+                StatusBadge(estado = reserva.estado) // Badge general de la Reserva
             }
+
             Text("Solicita: ${item.solicitante.nombre} (${item.solicitante.correo})")
             Text("Fecha: ${reserva.fecha} ($desde a $hasta)")
 
             HorizontalDivider()
-            Text("Desglose por Departamento:", style = MaterialTheme.typography.labelLarge)
 
+            Text(
+                text = "Estado por Departamento:",
+                style = MaterialTheme.typography.labelLarge
+            )
+
+            // Agrupamos los requerimientos solicitados por cada Departamento
             val porArea = item.requerimientos.groupBy { it.recurso.departamento }
+
             porArea.forEach { (depto, reqs) ->
-                Text("• ${depto.etiqueta}:", style = MaterialTheme.typography.bodyMedium)
-                reqs.forEach { req ->
-                    Text(
-                        "   - ${req.recurso.nombreItem} x${req.requerimiento.cantidadSolicitada}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                // Determinamos el estado del departamento según sus requerimientos
+                val estadoArea = when {
+                    reqs.any { it.requerimiento.estadoValidacion == EstadoRequerimiento.RECHAZADO } -> EstadoRequerimiento.RECHAZADO
+                    reqs.all { it.requerimiento.estadoValidacion == EstadoRequerimiento.APROBADO } -> EstadoRequerimiento.APROBADO
+                    else -> EstadoRequerimiento.PENDIENTE
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp)
+                ) {
+                    // Encabezado del área con su StatusBadge correspondiente
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "• ${depto.etiqueta}:",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        )
+                        // BADGE INDIVIDUAL DEL DEPARTAMENTO
+                        StatusBadge(estado = estadoArea)
+                    }
+
+                    // Detalle de insumos pedidos a este departamento
+                    reqs.forEach { req ->
+                        Text(
+                            text = "   - ${req.recurso.nombreItem} x${req.requerimiento.cantidadSolicitada}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
 
+            // Acciones del Administrador
             if (esPendiente) {
                 Spacer(modifier = Modifier.height(4.dp))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = onConfirmar) { Text("Confirmar Actividad") }
-                    OutlinedButton(onClick = onRechazar) { Text("Rechazar") }
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(
+                        onClick = onConfirmar,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Confirmar Actividad")
+                    }
+                    OutlinedButton(
+                        onClick = onRechazar,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Rechazar")
+                    }
                 }
             }
         }
