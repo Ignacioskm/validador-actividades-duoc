@@ -82,7 +82,9 @@ fun ResumenEventosScreen(
         CalendarioScreen(
             solicitanteId = adminId,
             nombreUsuario = "Administrador",
-            onAbrirWizard = { mostrarWizardAdmin = true },
+            onAbrirWizard = { fecha, bloque ->
+                solicitanteViewModel.prepararWizard(fecha, bloque)
+                mostrarWizardAdmin = true},
             onCerrarSesion = { mostrarCalendarioAdmin = false }, // Vuelve al Panel Admin al cerrar la vista
             viewModel = solicitanteViewModel
         )
@@ -92,6 +94,7 @@ fun ResumenEventosScreen(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             topBar = {
                 TopAppBar(
+
                     title = {
                         Column {
                             Text("Panel Administrador", style = MaterialTheme.typography.titleLarge)

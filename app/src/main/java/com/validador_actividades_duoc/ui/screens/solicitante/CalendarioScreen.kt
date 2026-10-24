@@ -86,7 +86,7 @@ import java.util.Locale
 fun CalendarioScreen(
     solicitanteId: Long,
     nombreUsuario: String = "Solicitante",
-    onAbrirWizard: () -> Unit = {},
+    onAbrirWizard: (fecha: LocalDate, bloque: Int?) -> Unit = { _, _ -> },
     onCerrarSesion: () -> Unit = {},
     viewModel: SolicitanteViewModel = viewModel(
         factory = SolicitanteViewModelFactory(
@@ -134,7 +134,7 @@ fun CalendarioScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = onAbrirWizard,
+                onClick = { onAbrirWizard(uiState.fechaSeleccionada, null) },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
                 text = { Text("Nueva Solicitud", fontWeight = FontWeight.Bold) },
                 containerColor = MaterialTheme.colorScheme.primary,
@@ -187,7 +187,7 @@ fun CalendarioScreen(
                         numeroBloque = numeroBloque,
                         bloqueHora = bloqueHora,
                         reserva = reservaEnBloque,
-                        onBloqueLibreClick = onAbrirWizard
+                        onBloqueLibreClick = { onAbrirWizard(uiState.fechaSeleccionada, numeroBloque) }
                     )
                 }
 
@@ -420,7 +420,7 @@ fun CalendarioScreenPreview() {
             CalendarioScreen(
                 solicitanteId = 1L,
                 nombreUsuario = "Carlos Gómez",
-                onAbrirWizard = {},
+                onAbrirWizard = { _, _ -> },
                 onCerrarSesion = {}
             )
         }
