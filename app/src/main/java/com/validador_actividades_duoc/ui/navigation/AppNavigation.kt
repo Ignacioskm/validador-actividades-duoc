@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -75,7 +76,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
         }
 
 
-        composable(Ruta.Solicitante.ruta) {
+        composable(Ruta.Solicitante.ruta) { backStackEntry ->
             val usuario by authViewModel.usuarioActual.collectAsState()
             val solicitante = usuario ?: return@composable
 
@@ -84,6 +85,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
             }
 
             val solicitanteViewModel: SolicitanteViewModel = viewModel(
+                viewModelStoreOwner = backStackEntry,
                 factory = SolicitanteViewModelFactory(
                     AppContainer.provideReservaRepository(context),
                     AppContainer.provideInventarioRepository(context)
@@ -95,17 +97,25 @@ fun AppNavigation(authViewModel: AuthViewModel) {
                 solicitanteId = solicitante.id,
                 nombreUsuario = solicitante.nombre,
                 viewModel = solicitanteViewModel,
-                onAbrirWizard = {navController.navigate(Ruta.Formulario.ruta)},
+                onAbrirWizard = {fecha, bloque ->
+                    solicitanteViewModel.prepararWizard(fecha, bloque)
+                    navController.navigate(Ruta.Formulario.ruta)
+                },
                 onCerrarSesion = cerrarSesion
             )
         }
 
-        composable(Ruta.Formulario.ruta) {
+        composable(Ruta.Formulario.ruta) { backStackEntry ->
             val usuario by authViewModel.usuarioActual.collectAsState()
             val solicitante = usuario ?: return@composable
 
-
+            val viewModelOwner = remember(navController.currentBackStackEntry) {
+                runCatching {
+                    navController.getBackStackEntry(Ruta.Solicitante.ruta)
+                }.getOrDefault(backStackEntry)
+            }
             val solicitanteViewModel: SolicitanteViewModel = viewModel(
+                viewModelStoreOwner = viewModelOwner,
                 factory = SolicitanteViewModelFactory(
                     AppContainer.provideReservaRepository(context),
                     AppContainer.provideInventarioRepository(context)

@@ -163,6 +163,28 @@ class SolicitanteViewModel(
         }
     }
 
+    /**
+     * Prepara el formulario Wizard cargando la fecha activa del calendario
+     * y, opcionalmente, el bloque inicial seleccionado por el usuario.
+     */
+    fun prepararWizard(fecha: LocalDate, bloque: Int? = null) {
+        val bloqueSeleccionado = bloque ?: 1
+        _wizardState.update {
+            WizardState(
+                pasoActual = 1,
+                nombreActividad = "",
+                fecha = fecha,
+                bloqueInicio = bloqueSeleccionado,
+                bloqueFin = bloqueSeleccionado,
+                recursosDisponibles = it.recursosDisponibles, // Mantiene los recursos ya cargados
+                cantidadesInsumos = emptyMap(),
+                cargando = false,
+                mensajeError = null,
+                guardadoExitoso = false
+            )
+        }
+    }
+
     // ACCIONES DEL WIZARD (PASO 2)
 
     fun actualizarCantidadInsumo(recursoId: Long, cantidad: Int) {
