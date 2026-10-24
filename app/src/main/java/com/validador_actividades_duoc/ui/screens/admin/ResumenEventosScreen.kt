@@ -16,16 +16,27 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+
+// Importaciones locales del proyecto
+import com.validador_actividades_duoc.data.local.AppContainer
 import com.validador_actividades_duoc.data.local.entity.RecursoInventarioEntity
 import com.validador_actividades_duoc.data.local.entity.ReservaConRequerimientos
 import com.validador_actividades_duoc.domain.model.Departamento
 import com.validador_actividades_duoc.domain.util.BLOQUES
+import com.validador_actividades_duoc.ui.components.DuocPrimaryButton
 import com.validador_actividades_duoc.ui.components.FormTextField
 import com.validador_actividades_duoc.ui.components.StatusBadge
+
+// Importaciones de las pantallas y ViewModel del Solicitante
+import com.validador_actividades_duoc.ui.screens.solicitante.CalendarioScreen
+import com.validador_actividades_duoc.ui.screens.solicitante.FormularioWizardScreen
+import com.validador_actividades_duoc.ui.screens.solicitante.SolicitanteViewModel
+import com.validador_actividades_duoc.ui.screens.solicitante.SolicitanteViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResumenEventosScreen(
+    adminId: Long = 1L, // Recibe el ID del administrador autenticado
     onCerrarSesion: () -> Unit,
     viewModel: AdminViewModel = viewModel(factory = AdminViewModelFactory(LocalContext.current))
 ) {
@@ -41,6 +52,17 @@ fun ResumenEventosScreen(
     var recursoAEditar by remember { mutableStateOf<RecursoInventarioEntity?>(null) }
     var mostrarNuevoRecurso by remember { mutableStateOf(false) }
 
+    // --- ESTADOS Y VIEWMODEL PARA LA RESERVA DE ADMIN ---
+    var mostrarCalendarioAdmin by remember { mutableStateOf(false) }
+    var mostrarWizardAdmin by remember { mutableStateOf(false) }
+
+    val solicitanteViewModel: SolicitanteViewModel = viewModel(
+        factory = SolicitanteViewModelFactory(
+            AppContainer.provideReservaRepository(LocalContext.current),
+            AppContainer.provideInventarioRepository(LocalContext.current)
+        )
+    )
+
     LaunchedEffect(mensaje) {
         mensaje?.let {
             snackbarHostState.showSnackbar(it)
@@ -48,72 +70,98 @@ fun ResumenEventosScreen(
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Panel Administrador", style = MaterialTheme.typography.titleLarge)
-                        Text("Gestión General Duoc UC", style = MaterialTheme.typography.bodyMedium)
+    // --- FLUIDO DE NAVEGACIÓN PARA RESERVAS DEL ADMIN ---
+    if (mostrarWizardAdmin) {
+        // Formulario de Reserva (Wizard de 3 pasos)
+        FormularioWizardScreen(
+            onVolverCalendario = { mostrarWizardAdmin = false },
+            viewModel = solicitanteViewModel
+        )
+    } else if (mostrarCalendarioAdmin) {
+        // Pantalla de Calendario del Admin
+        CalendarioScreen(
+            solicitanteId = adminId,
+            nombreUsuario = "Administrador",
+            onAbrirWizard = { mostrarWizardAdmin = true },
+            onCerrarSesion = { mostrarCalendarioAdmin = false }, // Vuelve al Panel Admin al cerrar la vista
+            viewModel = solicitanteViewModel
+        )
+    } else {
+        // --- VISTA NORMAL DEL PANEL ADMINISTRADOR ---
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text("Panel Administrador", style = MaterialTheme.typography.titleLarge)
+                            Text("Gestión General Duoc UC", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    },
+                    actions = {
+                        // Botón de Reserva personalizado usando DuocPrimaryButton
+                        DuocPrimaryButton(
+                            texto = "Reservar",
+                            onClick = { mostrarCalendarioAdmin = true },
+                            modificador = Modifier.width(130.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        TextButton(onClick = onCerrarSesion) {
+                            Text("Cerrar Sesión")
+                        }
                     }
-                },
-                actions = {
-                    TextButton(onClick = onCerrarSesion) {
-                        Text("Cerrar Sesión")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            TabRow(selectedTabIndex = pestañaSeleccionada) {
-                Tab(
-                    selected = pestañaSeleccionada == 0,
-                    onClick = { pestañaSeleccionada = 0 },
-                    text = {
-                        Text("Por Confirmar (${pendientesAdmin.size})")
-                    }
-                )
-                Tab(
-                    selected = pestañaSeleccionada == 1,
-                    onClick = { pestañaSeleccionada = 1 },
-                    text = { Text("Agenda (${confirmados.size})") }
-                )
-                Tab(
-                    selected = pestañaSeleccionada == 2,
-                    onClick = { pestañaSeleccionada = 2 },
-                    text = { Text("Inventario Global") }
                 )
             }
+        ) { padding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) {
+                TabRow(selectedTabIndex = pestañaSeleccionada) {
+                    Tab(
+                        selected = pestañaSeleccionada == 0,
+                        onClick = { pestañaSeleccionada = 0 },
+                        text = { Text("Por Confirmar (${pendientesAdmin.size})") }
+                    )
+                    Tab(
+                        selected = pestañaSeleccionada == 1,
+                        onClick = { pestañaSeleccionada = 1 },
+                        text = { Text("Agenda (${confirmados.size})") }
+                    )
+                    Tab(
+                        selected = pestañaSeleccionada == 2,
+                        onClick = { pestañaSeleccionada = 2 },
+                        text = { Text("Inventario Global") }
+                    )
+                }
 
-            when (pestañaSeleccionada) {
-                0 -> ListaPendientesAdmin(
-                    pendientes = pendientesAdmin,
-                    onConfirmar = { viewModel.confirmarEvento(it.reserva.id) },
-                    onRechazar = { reservaARechazar = it }
-                )
+                when (pestañaSeleccionada) {
+                    0 -> ListaPendientesAdmin(
+                        pendientes = pendientesAdmin,
+                        onConfirmar = { viewModel.confirmarEvento(it.reserva.id) },
+                        onRechazar = { reservaARechazar = it }
+                    )
 
-                1 -> ListaEventosConfirmados(
-                    busqueda = busqueda,
-                    onBusquedaChange = viewModel::onBusquedaChanged,
-                    eventos = confirmados
-                )
+                    1 -> ListaEventosConfirmados(
+                        busqueda = busqueda,
+                        onBusquedaChange = viewModel::onBusquedaChanged,
+                        eventos = confirmados
+                    )
 
-                2 -> GestionInventarioGlobal(
-                    inventario = inventario,
-                    onEditarStock = { recursoAEditar = it },
-                    onNuevoRecursoClick = { mostrarNuevoRecurso = true }
-                )
+                    2 -> GestionInventarioGlobal(
+                        inventario = inventario,
+                        onEditarStock = { recursoAEditar = it },
+                        onNuevoRecursoClick = { mostrarNuevoRecurso = true }
+                    )
+                }
             }
         }
     }
 
-    // Diálogo de Rechazo por Admin
+    // Diálogos de Rechazar, Editar y Crear Recurso
     reservaARechazar?.let { reservaConReq ->
         var motivo by remember { mutableStateOf("") }
         AlertDialog(
@@ -142,7 +190,6 @@ fun ResumenEventosScreen(
         )
     }
 
-    // Diálogo de Edición de Stock
     recursoAEditar?.let { recurso ->
         var nuevoStock by remember(recurso.id) { mutableStateOf(recurso.stockTotal.toString()) }
         AlertDialog(
@@ -174,7 +221,6 @@ fun ResumenEventosScreen(
         )
     }
 
-    // Diálogo de Crear Recurso para Cualquier Área
     if (mostrarNuevoRecurso) {
         var departamentoSel by remember { mutableStateOf(Departamento.AUXILIARES) }
         var nombre by remember { mutableStateOf("") }
@@ -302,7 +348,6 @@ private fun TarjetaReservaAdmin(
             HorizontalDivider()
             Text("Desglose por Departamento:", style = MaterialTheme.typography.labelLarge)
 
-            // Agrupamos requerimientos por departamento del recurso
             val porArea = item.requerimientos.groupBy { it.recurso.departamento }
             porArea.forEach { (depto, reqs) ->
                 Text("• ${depto.etiqueta}:", style = MaterialTheme.typography.bodyMedium)
