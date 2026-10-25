@@ -5,6 +5,7 @@ import com.validador_actividades_duoc.domain.model.Departamento
 import com.validador_actividades_duoc.domain.model.EstadoRequerimiento
 import com.validador_actividades_duoc.domain.model.EstadoReserva
 import com.validador_actividades_duoc.domain.model.RolUsuario
+import com.validador_actividades_duoc.domain.model.TipoAdjunto
 
 class Converters {
 
@@ -31,4 +32,10 @@ class Converters {
 
     @TypeConverter
     fun toEstadoRequerimiento(value: String?): EstadoRequerimiento? = value?.let { enumValueOf<EstadoRequerimiento>(it) }
+
+    @TypeConverter
+    fun fromTipoAdjunto(value: TipoAdjunto?): String? = value?.name
+
+    @TypeConverter
+    fun toTipoAdjunto(value: String?): TipoAdjunto? = value?.let { enumValueOf<TipoAdjunto>(it) }
 }

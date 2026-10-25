@@ -8,5 +8,7 @@ data class ReservaConRequerimientos(
     @Relation(entity = RequerimientoEntity::class, parentColumn = "id", entityColumn = "reservaId")
     val requerimientos: List<RequerimientoConRecurso>,
     @Relation(parentColumn = "solicitanteId", entityColumn = "id")
-    val solicitante: UsuarioEntity
+    val solicitante: UsuarioEntity,
+    @Relation(parentColumn = "id", entityColumn = "reservaId")
+    val adjuntos: List<AdjuntoEntity>
 )

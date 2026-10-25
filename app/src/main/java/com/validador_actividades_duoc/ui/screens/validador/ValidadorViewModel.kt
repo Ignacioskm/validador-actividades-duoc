@@ -19,12 +19,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import com.validador_actividades_duoc.data.local.entity.AdjuntoEntity
 
 /** Lo que ve un área de una reserva: solo SUS ítems. */
 data class SolicitudArea(
     val reserva: ReservaEntity,
     val solicitante: UsuarioEntity,
-    val items: List<RequerimientoConRecurso>
+    val items: List<RequerimientoConRecurso>,
+    val adjuntos: List<AdjuntoEntity>
 )
 
 class ValidadorViewModel(
@@ -44,7 +46,8 @@ class ValidadorViewModel(
                     SolicitudArea(
                         reserva = r.reserva,
                         solicitante = r.solicitante,
-                        items = r.requerimientos.filter { it.recurso.departamento == departamento }
+                        items = r.requerimientos.filter { it.recurso.departamento == departamento },
+                        adjuntos = r.adjuntos
                     )
                 }
             }

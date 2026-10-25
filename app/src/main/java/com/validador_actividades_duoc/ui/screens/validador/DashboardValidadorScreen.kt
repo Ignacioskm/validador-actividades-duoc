@@ -136,6 +136,7 @@ private fun SolicitudCard(
                     style = MaterialTheme.typography.bodyMedium
                 )
             }
+            com.validador_actividades_duoc.ui.components.AdjuntosLista(adjuntos = solicitud.adjuntos)
             Spacer(Modifier.height(4.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = onAprobar) { Text("Aprobar") }
