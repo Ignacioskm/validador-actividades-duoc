@@ -6,6 +6,7 @@ import androidx.room.TypeConverters
 import com.validador_actividades_duoc.data.local.dao.InventarioDao
 import com.validador_actividades_duoc.data.local.dao.ReservaDao
 import com.validador_actividades_duoc.data.local.dao.UsuarioDao
+import com.validador_actividades_duoc.data.local.entity.AdjuntoEntity
 import com.validador_actividades_duoc.data.local.entity.RecursoInventarioEntity
 import com.validador_actividades_duoc.data.local.entity.RequerimientoEntity
 import com.validador_actividades_duoc.data.local.entity.ReservaEntity
@@ -16,9 +17,10 @@ import com.validador_actividades_duoc.data.local.entity.UsuarioEntity
         UsuarioEntity::class,
         ReservaEntity::class,
         RecursoInventarioEntity::class,
-        RequerimientoEntity::class
+        RequerimientoEntity::class,
+        AdjuntoEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

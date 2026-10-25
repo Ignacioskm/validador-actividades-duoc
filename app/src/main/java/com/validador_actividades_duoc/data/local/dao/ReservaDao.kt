@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import com.validador_actividades_duoc.data.local.entity.AdjuntoEntity
 import com.validador_actividades_duoc.data.local.entity.RequerimientoEntity
 import com.validador_actividades_duoc.data.local.entity.ReservaConRequerimientos
 import com.validador_actividades_duoc.data.local.entity.ReservaEntity
@@ -100,4 +101,7 @@ interface ReservaDao {
         estado: EstadoReserva,
         pendienteAdmin: EstadoReserva
     ): Flow<List<ReservaConRequerimientos>>
+
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    suspend fun insertarAdjuntos(adjuntos: List<AdjuntoEntity>)
 }

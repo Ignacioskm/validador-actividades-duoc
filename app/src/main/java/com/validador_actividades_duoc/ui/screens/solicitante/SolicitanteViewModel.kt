@@ -3,6 +3,9 @@ package com.validador_actividades_duoc.ui.screens.solicitante
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.validador_actividades_duoc.data.AdjuntoStorage
+import com.validador_actividades_duoc.domain.model.AdjuntoBorrador
+import com.validador_actividades_duoc.domain.model.MAX_ADJUNTOS
 import com.validador_actividades_duoc.data.local.entity.RecursoInventarioEntity
 import com.validador_actividades_duoc.data.local.entity.ReservaConRequerimientos
 import com.validador_actividades_duoc.data.local.entity.ReservaEntity
@@ -40,6 +43,7 @@ data class WizardState(
     val bloqueFin: Int = 1,
     val recursosDisponibles: List<RecursoInventarioEntity> = emptyList(),
     val cantidadesInsumos: Map<Long, Int> = emptyMap(),
+    val adjuntos: List<AdjuntoBorrador> = emptyList(),
     val cargando: Boolean = false,
     val mensajeError: String? = null,
     val guardadoExitoso: Boolean = false
@@ -245,7 +249,7 @@ class SolicitanteViewModel(
                 bloqueFin = estado.bloqueFin
             )
 
-            val resultado = reservaRepository.crearReserva(nuevaReserva, itemsFiltrados)
+            val resultado = reservaRepository.crearReserva(nuevaReserva, itemsFiltrados, estado.adjuntos)
 
             resultado.onSuccess {
                 _wizardState.update {
@@ -278,6 +282,17 @@ class SolicitanteViewModel(
     fun limpiarMensajeError() {
         _uiState.update { it.copy(mensajeError = null) }
         _wizardState.update { it.copy(mensajeError = null) }
+    }
+
+    fun agregarAdjunto(adjunto: AdjuntoBorrador) {
+        _wizardState.update {
+            if (it.adjuntos.size < MAX_ADJUNTOS) it.copy(adjuntos = it.adjuntos + adjunto) else it
+        }
+    }
+
+    fun quitarAdjunto(adjunto: AdjuntoBorrador) {
+        AdjuntoStorage.eliminarArchivo(adjunto.rutaLocal)   // borra la copia del almacenamiento de la app
+        _wizardState.update { it.copy(adjuntos = it.adjuntos - adjunto) }
     }
 }
 

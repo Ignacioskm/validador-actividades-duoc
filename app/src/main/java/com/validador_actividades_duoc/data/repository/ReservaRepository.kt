@@ -11,6 +11,10 @@ import com.validador_actividades_duoc.domain.model.EstadoRequerimiento
 import com.validador_actividades_duoc.domain.util.BLOQUES
 import com.validador_actividades_duoc.domain.util.ResultadoAnticipacion
 import com.validador_actividades_duoc.domain.util.evaluarAnticipacion
+import com.validador_actividades_duoc.data.local.entity.AdjuntoEntity
+import com.validador_actividades_duoc.domain.model.AdjuntoBorrador
+import com.validador_actividades_duoc.domain.model.MAX_ADJUNTOS
+import com.validador_actividades_duoc.domain.model.MAX_BYTES_ADJUNTO
 import kotlinx.coroutines.flow.Flow
 import java.time.LocalDate
 
@@ -40,6 +44,8 @@ class ReservaRepository(private val db: AppDatabase) {
      * @param items recursoId -> cantidad pedida. Las áreas involucradas salen de aquí.
      * Revalida anticipación y stock dentro de una transacción (no se confía en la UI).
      */
+
+    /*
     suspend fun crearReserva(reserva: ReservaEntity, items: Map<Long, Int>): Result<Long> = runCatching {
         require(items.isNotEmpty()) { "Selecciona al menos un recurso" }
         require(reserva.nombreActividad.isNotBlank()) { "Falta el nombre de la actividad" }
@@ -75,6 +81,63 @@ class ReservaRepository(private val db: AppDatabase) {
 
             val reservaId = reservaDao.insertarReserva(reserva.copy(estado = EstadoReserva.PENDIENTE))
             reservaDao.insertarRequerimientos(requerimientos.map { it.copy(reservaId = reservaId) })
+            reservaId
+        }
+    } */
+
+    suspend fun crearReserva(
+        reserva: ReservaEntity,
+        items: Map<Long, Int>,
+        adjuntos: List<AdjuntoBorrador> = emptyList()
+    ): Result<Long> = runCatching {
+        require(items.isNotEmpty()) { "Selecciona al menos un recurso" }
+        require(reserva.nombreActividad.isNotBlank()) { "Falta el nombre de la actividad" }
+        require(reserva.bloqueInicio in 1..BLOQUES.size && reserva.bloqueFin in reserva.bloqueInicio..BLOQUES.size) {
+            "Rango de bloques inválido"
+        }
+        require(adjuntos.size <= MAX_ADJUNTOS) { "Máximo $MAX_ADJUNTOS archivos adjuntos" }
+        require(adjuntos.all { it.tamanoBytes <= MAX_BYTES_ADJUNTO }) { "Cada archivo debe pesar menos de 5 MB" }
+
+        val anticipacion = evaluarAnticipacion(
+            LocalDate.parse(reserva.fecha), BLOQUES[reserva.bloqueInicio - 1]
+        )
+        check(anticipacion != ResultadoAnticipacion.BLOQUEADA) {
+            "Debes solicitar con al menos 48 horas de anticipación"
+        }
+
+        db.withTransaction {
+            val requerimientos = items.map { (recursoId, cantidad) ->
+                val recurso = inventarioDao.obtenerRecursoPorId(recursoId)
+                    ?: error("El recurso $recursoId no existe")
+
+                var maxOcupado = 0
+                for (bloque in reserva.bloqueInicio..reserva.bloqueFin) {
+                    maxOcupado = maxOf(
+                        maxOcupado,
+                        inventarioDao.obtenerCantidadOcupada(recursoId, reserva.fecha, bloque)
+                    )
+                }
+                val disponible = (recurso.stockTotal - maxOcupado).coerceAtLeast(0)
+                check(cantidad in 1..disponible) {
+                    "Stock insuficiente de '${recurso.nombreItem}' (disponible: $disponible)"
+                }
+                RequerimientoEntity(reservaId = 0, recursoId = recursoId, cantidadSolicitada = cantidad)
+            }
+
+            val reservaId = reservaDao.insertarReserva(reserva.copy(estado = EstadoReserva.PENDIENTE))
+            reservaDao.insertarRequerimientos(requerimientos.map { it.copy(reservaId = reservaId) })
+            if (adjuntos.isNotEmpty()) {
+                reservaDao.insertarAdjuntos(adjuntos.map {
+                    AdjuntoEntity(
+                        reservaId = reservaId,
+                        tipo = it.tipo,
+                        nombreArchivo = it.nombreArchivo,
+                        rutaLocal = it.rutaLocal,
+                        mimeType = it.mimeType,
+                        tamanoBytes = it.tamanoBytes
+                    )
+                })
+            }
             reservaId
         }
     }

@@ -57,6 +57,7 @@ import com.validador_actividades_duoc.ui.theme.DuocTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import com.validador_actividades_duoc.ui.components.AdjuntosSection
 
 /**
  * Pantalla Wizard de creación de reservas paso a paso para el Solicitante
@@ -349,6 +350,15 @@ private fun Paso1FechaYBloques(
                 )
             }
         }
+
+        item {
+            AdjuntosSection(
+                adjuntos = wizardState.adjuntos,
+                alAgregar = viewModel::agregarAdjunto,
+                alQuitar = viewModel::quitarAdjunto
+            )
+        }
+
     }
 }
 
@@ -522,6 +532,28 @@ private fun Paso3ResumenYConfirmacion(
                 }
             }
         }
+
+        if (wizardState.adjuntos.isNotEmpty()) {
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Documentos adjuntos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        wizardState.adjuntos.forEach {
+                            Text("• ${it.nombreArchivo}", style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }
 
