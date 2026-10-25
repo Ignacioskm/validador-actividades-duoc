@@ -416,10 +416,13 @@ private fun Paso2RecursosEInsumos(
                             listaRecursos.forEach { recurso ->
                                 val cantidadPedida = wizardState.cantidadesInsumos[recurso.id] ?: 0
 
+                                // Obtenemos el stock real calculado (o el total por defecto si aún no carga)
+                                val stockRealDisponible = wizardState.stockDisponibles[recurso.id] ?: recurso.stockTotal
+
                                 ContadorCantidad(
                                     nombreRecurso = recurso.nombreItem,
                                     cantidadActual = cantidadPedida,
-                                    stockDisponible = recurso.stockTotal,
+                                    stockDisponible = stockRealDisponible, // <--- Usamos el stock disponible real
                                     alCambiarCantidad = { nuevaCant ->
                                         viewModel.actualizarCantidadInsumo(recurso.id, nuevaCant)
                                     }
@@ -597,6 +600,7 @@ fun Paso1Preview() {
         }
     }
 }
+
 
 
 @Preview(showBackground = true, name = "Paso 2: Recursos e Insumos")
