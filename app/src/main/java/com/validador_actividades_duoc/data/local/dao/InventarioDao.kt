@@ -42,7 +42,7 @@ interface InventarioDao {
         WHERE req.recursoId = :recursoId
           AND res.fecha = :fecha
           AND :bloque BETWEEN res.bloqueInicio AND res.bloqueFin
-          AND res.estado IN ('PENDIENTE', 'PENDIENTE_ADMIN', 'CONFIRMADA')
+          AND res.estado IN ('CONFIRMADA')
     """)
     suspend fun obtenerCantidadOcupada(recursoId: Long, fecha: String, bloque: Int): Int
 }

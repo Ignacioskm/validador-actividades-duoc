@@ -45,46 +45,6 @@ class ReservaRepository(private val db: AppDatabase) {
      * Revalida anticipación y stock dentro de una transacción (no se confía en la UI).
      */
 
-    /*
-    suspend fun crearReserva(reserva: ReservaEntity, items: Map<Long, Int>): Result<Long> = runCatching {
-        require(items.isNotEmpty()) { "Selecciona al menos un recurso" }
-        require(reserva.nombreActividad.isNotBlank()) { "Falta el nombre de la actividad" }
-        require(reserva.bloqueInicio in 1..BLOQUES.size && reserva.bloqueFin in reserva.bloqueInicio..BLOQUES.size) {
-            "Rango de bloques inválido"
-        }
-
-        val anticipacion = evaluarAnticipacion(
-            LocalDate.parse(reserva.fecha), BLOQUES[reserva.bloqueInicio - 1]
-        )
-        check(anticipacion != ResultadoAnticipacion.BLOQUEADA) {
-            "Debes solicitar con al menos 48 horas de anticipación"
-        }
-
-        db.withTransaction {
-            val requerimientos = items.map { (recursoId, cantidad) ->
-                val recurso = inventarioDao.obtenerRecursoPorId(recursoId)
-                    ?: error("El recurso $recursoId no existe")
-
-                var maxOcupado = 0
-                for (bloque in reserva.bloqueInicio..reserva.bloqueFin) {
-                    maxOcupado = maxOf(
-                        maxOcupado,
-                        inventarioDao.obtenerCantidadOcupada(recursoId, reserva.fecha, bloque)
-                    )
-                }
-                val disponible = (recurso.stockTotal - maxOcupado).coerceAtLeast(0)
-                check(cantidad in 1..disponible) {
-                    "Stock insuficiente de '${recurso.nombreItem}' (disponible: $disponible)"
-                }
-                RequerimientoEntity(reservaId = 0, recursoId = recursoId, cantidadSolicitada = cantidad)
-            }
-
-            val reservaId = reservaDao.insertarReserva(reserva.copy(estado = EstadoReserva.PENDIENTE))
-            reservaDao.insertarRequerimientos(requerimientos.map { it.copy(reservaId = reservaId) })
-            reservaId
-        }
-    } */
-
     suspend fun crearReserva(
         reserva: ReservaEntity,
         items: Map<Long, Int>,
@@ -198,8 +158,34 @@ class ReservaRepository(private val db: AppDatabase) {
     // 3. el admin valida definitivamente la actividad
     suspend fun confirmarPorAdmin(reservaId: Long): Result<Unit> = runCatching {
         db.withTransaction {
-            val reserva = reservaDao.obtenerPorId(reservaId)?.reserva ?: error("La solicitud no existe")
-            check(reserva.estado == EstadoReserva.PENDIENTE_ADMIN) { "Todavía faltan áreas por validar" }
+            val reservaConReqs = reservaDao.obtenerPorId(reservaId)
+                ?: error("La solicitud no existe")
+
+            val reserva = reservaConReqs.reserva
+            check(reserva.estado == EstadoReserva.PENDIENTE_ADMIN) {
+                "Esta solicitud no está lista para confirmación final"
+            }
+
+            // Revalidar stock contra reservas ya CONFIRMADAS
+            for (reqConRecurso in reservaConReqs.requerimientos) {
+                val req = reqConRecurso.requerimiento
+                val recurso = reqConRecurso.recurso
+
+                if (req.estadoValidacion == EstadoRequerimiento.APROBADO) {
+                    var maxOcupado = 0
+                    for (bloque in reserva.bloqueInicio..reserva.bloqueFin) {
+                        val ocupado = inventarioDao.obtenerCantidadOcupada(recurso.id, reserva.fecha, bloque)
+                        if (ocupado > maxOcupado) maxOcupado = ocupado
+                    }
+
+                    val disponible = recurso.stockTotal - maxOcupado
+                    check(req.cantidadSolicitada <= disponible) {
+                        "No se puede confirmar. Stock insuficiente de '${recurso.nombreItem}'. " +
+                                "Quedan $disponible unid. disponibles y se requieren ${req.cantidadSolicitada}."
+                    }
+                }
+            }
+
             reservaDao.actualizarEstado(reservaId, EstadoReserva.CONFIRMADA, null)
         }
     }

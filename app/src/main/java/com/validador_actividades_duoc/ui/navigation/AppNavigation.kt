@@ -81,7 +81,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
             val solicitante = usuario ?: return@composable
 
             if(solicitante.rol != RolUsuario.SOLICITANTE){
-                Text("Acceso no autorizadska")
+                Text("Acceso no autorizado")
             }
 
             val solicitanteViewModel: SolicitanteViewModel = viewModel(
@@ -89,7 +89,6 @@ fun AppNavigation(authViewModel: AuthViewModel) {
                 factory = SolicitanteViewModelFactory(
                     AppContainer.provideReservaRepository(context),
                     AppContainer.provideInventarioRepository(context)
-
                 )
             )
 

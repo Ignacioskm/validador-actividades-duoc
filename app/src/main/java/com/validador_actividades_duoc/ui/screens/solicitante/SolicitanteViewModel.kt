@@ -43,6 +43,7 @@ data class WizardState(
     val bloqueFin: Int = 1,
     val recursosDisponibles: List<RecursoInventarioEntity> = emptyList(),
     val cantidadesInsumos: Map<Long, Int> = emptyMap(),
+    val stockDisponibles: Map<Long, Int> = emptyMap(),
     val adjuntos: List<AdjuntoBorrador> = emptyList(),
     val cargando: Boolean = false,
     val mensajeError: String? = null,
@@ -138,6 +139,7 @@ class SolicitanteViewModel(
                 }
                 .collect { recursos ->
                     _wizardState.update { it.copy(recursosDisponibles = recursos) }
+                    actualizarStockDisponibles()
                 }
         }
     }
@@ -154,8 +156,27 @@ class SolicitanteViewModel(
         _wizardState.update { it.copy(nombreActividad = nombre) }
     }
 
+    private fun actualizarStockDisponibles() {
+        viewModelScope.launch {
+            val estado = _wizardState.value
+            val mapa = mutableMapOf<Long, Int>()
+            for (recurso in estado.recursosDisponibles) {
+                val disponible = inventarioRepository.calcularStockDisponible(
+                    recursoId = recurso.id,
+                    fecha = estado.fecha.toString(),
+                    bloqueInicio = estado.bloqueInicio,
+                    bloqueFin = estado.bloqueFin,
+                    stockTotal = recurso.stockTotal
+                )
+                mapa[recurso.id] = disponible
+            }
+            _wizardState.update { it.copy(stockDisponibles = mapa) }
+        }
+    }
+
     fun actualizarFechaReserva(fecha: LocalDate) {
         _wizardState.update { it.copy(fecha = fecha) }
+        actualizarStockDisponibles()
     }
 
     fun seleccionarRangoBloques(inicio: Int, fin: Int) {
@@ -165,6 +186,7 @@ class SolicitanteViewModel(
                 bloqueFin = maxOf(inicio, fin)
             )
         }
+        actualizarStockDisponibles()
     }
 
     /**
@@ -187,6 +209,7 @@ class SolicitanteViewModel(
                 guardadoExitoso = false
             )
         }
+        actualizarStockDisponibles()
     }
 
     // ACCIONES DEL WIZARD (PASO 2)
