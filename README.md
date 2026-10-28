@@ -423,6 +423,3 @@ Al tratarse de un prototipo local, existen aspectos pendientes para una versión
 
 ---
 
-## Autoría
-
-Proyecto desarrollado para la gestión de actividades y recursos de **Duoc UC**. Ajusta esta sección con los nombres de los integrantes y la asignatura correspondiente.
