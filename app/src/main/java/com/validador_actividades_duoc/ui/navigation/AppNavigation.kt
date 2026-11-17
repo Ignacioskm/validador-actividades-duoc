@@ -27,6 +27,9 @@ import com.validador_actividades_duoc.ui.screens.validador.DashboardValidadorScr
 import com.validador_actividades_duoc.ui.screens.validador.GestionInventarioScreen
 import com.validador_actividades_duoc.ui.screens.validador.ValidadorViewModel
 import com.validador_actividades_duoc.ui.screens.validador.ValidadorViewModelFactory
+// retrofit
+import com.validador_actividades_duoc.ui.screens.posts.PostScreen
+import com.validador_actividades_duoc.ui.screens.posts.PostViewModel
 
 sealed class Ruta(val ruta: String) {
     object Login : Ruta("login")
@@ -36,6 +39,8 @@ sealed class Ruta(val ruta: String) {
     object Validador : Ruta("validador_dashboard")
     object Admin : Ruta("admin_resumen")
     object GestionInventario : Ruta("validador_inventario")
+
+    object Posts : Ruta("posts")   // ← agregar esto
 }
 
 @Composable
@@ -167,9 +172,14 @@ fun AppNavigation(authViewModel: AuthViewModel) {
             )
 
             ResumenEventosScreen(
+                navController = navController,
                 onCerrarSesion = cerrarSesion,
                 viewModel = adminViewModel
             )
+        }
+
+        composable("posts") {
+            PostScreen(viewModel = viewModel())
         }
     }
 }

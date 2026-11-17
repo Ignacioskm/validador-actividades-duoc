@@ -17,6 +17,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 
+import androidx.navigation.NavHostController
+
 // Importaciones locales del proyecto
 import com.validador_actividades_duoc.data.local.AppContainer
 import com.validador_actividades_duoc.data.local.entity.RecursoInventarioEntity
@@ -37,7 +39,8 @@ import com.validador_actividades_duoc.ui.screens.solicitante.SolicitanteViewMode
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResumenEventosScreen(
-    adminId: Long = 1L, // Recibe el ID del administrador autenticado
+    navController: NavHostController, // <-- AGREGAR ESTA LÍNEA
+    adminId: Long = 1L,
     onCerrarSesion: () -> Unit,
     viewModel: AdminViewModel = viewModel(factory = AdminViewModelFactory(LocalContext.current))
 ) {
@@ -103,6 +106,16 @@ fun ResumenEventosScreen(
                         }
                     },
                     actions = {
+                        // ---> NUEVO BOTÓN DE PRUEBA PARA LA API <---
+                        Button(
+                            onClick = { navController.navigate("posts") },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
+                        ) {
+                            Text("Ver Posts")
+                        }
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
                         // Botón de Reserva personalizado usando DuocPrimaryButton
                         DuocPrimaryButton(
                             texto = "Reservar",
