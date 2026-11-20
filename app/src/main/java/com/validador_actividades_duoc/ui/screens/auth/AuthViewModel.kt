@@ -12,6 +12,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.validador_actividades_duoc.domain.model.Departamento
 
 class AuthViewModel(
     private val usuarioDao: UsuarioDao,
@@ -141,5 +142,112 @@ class AuthViewModel(
             }
         }
     }
+
+
+    private fun usuarioDemo(correo: String): UsuarioEntity? {
+        val email = correo.trim().lowercase()
+
+        // Solo estos usuarios pueden acceder al modo demo.
+        return when (email) {
+            "admin@duoc.cl" -> UsuarioEntity(
+                correo = email,
+                nombre = "Administrador",
+                rol = RolUsuario.ADMIN
+            )
+
+            "profesor@duoc.cl" -> UsuarioEntity(
+                correo = email,
+                nombre = "Profesor Demo",
+                rol = RolUsuario.SOLICITANTE
+            )
+
+            "digitales@duoc.cl" -> UsuarioEntity(
+                correo = email,
+                nombre = "Validador Servicios Digitales",
+                rol = RolUsuario.VALIDADOR,
+                departamento = Departamento.DIGITALES
+            )
+
+            "porteria@duoc.cl" -> UsuarioEntity(
+                correo = email,
+                nombre = "Validador Portería y Accesos",
+                rol = RolUsuario.VALIDADOR,
+                departamento = Departamento.PORTERIA
+            )
+
+            "auxiliares@duoc.cl" -> UsuarioEntity(
+                correo = email,
+                nombre = "Validador Servicios Auxiliares",
+                rol = RolUsuario.VALIDADOR,
+                departamento = Departamento.AUXILIARES
+            )
+
+            "comunicacion@duoc.cl" -> UsuarioEntity(
+                correo = email,
+                nombre = "Validador Comunicaciones",
+                rol = RolUsuario.VALIDADOR,
+                departamento = Departamento.COMUNICACION
+            )
+
+            else -> null
+        }
+    }
+
+    fun iniciarSesionDemo(activity: Activity, correo: String) {
+        if (_cargando.value) return
+
+        viewModelScope.launch {
+            _cargando.value = true
+            _errorMessage.value = null
+            _usuarioActual.value = null
+
+            try {
+                val plantilla = usuarioDemo(correo)
+                    ?: error("Este correo no está habilitado para demostración")
+
+                // Cerramos cualquier sesión Google anterior.
+                authRepository.cerrarSesion(activity)
+
+                // Recuperamos al usuario demo si ya existe.
+                val existente = usuarioDao.obtenerUsuarioPorEmail(
+                    plantilla.correo
+                )
+
+                val usuario = if (existente != null) {
+                    // No permitimos utilizar una cuenta vinculada
+                    // a Firebase como cuenta de demostración.
+                    check(existente.firebaseUid == null) {
+                        "Este correo está vinculado a una cuenta Google"
+                    }
+
+                    // El rol y área deben coincidir con la lista demo.
+                    check(
+                        existente.rol == plantilla.rol &&
+                                existente.departamento == plantilla.departamento
+                    ) {
+                        "La cuenta local tiene una configuración diferente"
+                    }
+
+                    existente
+                } else {
+                    val id = usuarioDao.insertarUsuario(plantilla)
+
+                    usuarioDao.obtenerUsuarioPorId(id)
+                        ?: error("No se pudo crear el usuario demo")
+                }
+
+                _usuarioActual.value = usuario
+
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _errorMessage.value =
+                    e.message ?: "Error al ingresar en modo demo"
+            } finally {
+                _cargando.value = false
+            }
+        }
+    }
+
 }
 
