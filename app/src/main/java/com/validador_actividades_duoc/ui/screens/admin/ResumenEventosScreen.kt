@@ -159,7 +159,8 @@ fun ResumenEventosScreen(
                     0 -> ListaPendientesAdmin(
                         pendientes = pendientesAdmin,
                         onConfirmar = { viewModel.confirmarEvento(it.reserva.id) },
-                        onRechazar = { reservaARechazar = it }
+                        onRechazar = { reservaARechazar = it },
+                        onConfirmarExcepcional = { viewModel.confirmarEventoExcepcional(it.reserva.id) }
                     )
 
                     1 -> ListaEventosConfirmados(
@@ -286,7 +287,8 @@ fun ResumenEventosScreen(
 private fun ListaPendientesAdmin(
     pendientes: List<ReservaConRequerimientos>,
     onConfirmar: (ReservaConRequerimientos) -> Unit,
-    onRechazar: (ReservaConRequerimientos) -> Unit
+    onRechazar: (ReservaConRequerimientos) -> Unit,
+    onConfirmarExcepcional: (ReservaConRequerimientos) -> Unit
 ) {
     if (pendientes.isEmpty()) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -302,7 +304,8 @@ private fun ListaPendientesAdmin(
                     item = item,
                     esPendiente = true,
                     onConfirmar = { onConfirmar(item) },
-                    onRechazar = { onRechazar(item) }
+                    onRechazar = { onRechazar(item) },
+                    onConfirmarExcepcional = { onConfirmarExcepcional(item) }
                 )
             }
         }
@@ -343,8 +346,10 @@ private fun TarjetaReservaAdmin(
     item: ReservaConRequerimientos,
     esPendiente: Boolean,
     onConfirmar: () -> Unit = {},
-    onRechazar: () -> Unit = {}
+    onRechazar: () -> Unit = {},
+    onConfirmarExcepcional: () -> Unit = {}
 ) {
+    var mostrarDialogoExcepcional by remember {mutableStateOf(false) }
     val reserva = item.reserva
     val desde = BLOQUES.getOrNull(reserva.bloqueInicio - 1)?.inicio?.toString() ?: ""
     val hasta = BLOQUES.getOrNull(reserva.bloqueFin - 1)?.fin?.toString() ?: ""
@@ -439,10 +444,59 @@ private fun TarjetaReservaAdmin(
                     ) {
                         Text("Rechazar")
                     }
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    OutlinedButton(
+                        onClick = {
+                            mostrarDialogoExcepcional = true
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Validar excepcionalmente")
+                    }
                 }
             }
         }
     }
+    if (mostrarDialogoExcepcional) {
+        AlertDialog(
+            onDismissRequest = {
+                mostrarDialogoExcepcional = false
+            },
+            title = {
+                Text("Confirmación excepcional")
+            },
+            text = {
+                Text(
+                    "¿Estás seguro de que deseas validar esta " +
+                            "actividad aunque todavía no se hayan " +
+                            "aprobado todos los recursos? " +
+                            "Las decisiones de los departamentos " +
+                            "no serán modificadas."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        mostrarDialogoExcepcional = false
+                        onConfirmarExcepcional()
+                    }
+                ) {
+                    Text("Sí, validar")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        mostrarDialogoExcepcional = false
+                    }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
 }
 
 @Composable

@@ -20,4 +20,20 @@ interface UsuarioDao {
 
     @Query("SELECT COUNT(*) FROM usuarios")
     suspend fun contar(): Int
+
+    //Consulta prnicipal para identificar usuarios autenticados.
+    @Query("SELECT * FROM usuarios WHERE firebaseUid = :uid LIMIT 1")
+    suspend fun obtenerUsuarioPorUid(uid: String): UsuarioEntity?
+
+    @Query("""
+    UPDATE usuarios
+    SET correo = :correo, nombre = :nombre
+    WHERE firebaseUid = :uid
+    """)
+    suspend fun actualizarPerfilGoogle(
+        uid: String,
+        correo: String,
+        nombre: String
+    )
+
 }

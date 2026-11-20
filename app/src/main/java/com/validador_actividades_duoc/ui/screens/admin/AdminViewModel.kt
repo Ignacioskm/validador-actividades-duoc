@@ -94,6 +94,23 @@ class AdminViewModel(
                 .onFailure { _mensaje.value = it.message ?: "Error al crear recurso" }
         }
     }
+
+    fun confirmarEventoExcepcional(reservaId: Long) {
+        viewModelScope.launch {
+            reservaRepository.confirmarPorAdmin(
+                reservaId = reservaId,
+                excepcional = true
+            )
+                .onSuccess {
+                    _mensaje.value =
+                        "Actividad confirmada excepcionalmente"
+                }
+                .onFailure {
+                    _mensaje.value =
+                        it.message ?: "Error al confirmar"
+                }
+        }
+    }
 }
 
 class AdminViewModelFactory(private val context: Context) : ViewModelProvider.Factory {

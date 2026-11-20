@@ -27,6 +27,7 @@ import com.validador_actividades_duoc.ui.screens.validador.DashboardValidadorScr
 import com.validador_actividades_duoc.ui.screens.validador.GestionInventarioScreen
 import com.validador_actividades_duoc.ui.screens.validador.ValidadorViewModel
 import com.validador_actividades_duoc.ui.screens.validador.ValidadorViewModelFactory
+import android.app.Activity
 // retrofit
 import com.validador_actividades_duoc.ui.screens.posts.PostScreen
 import com.validador_actividades_duoc.ui.screens.posts.PostViewModel
@@ -55,11 +56,18 @@ private fun rememberValidadorViewModel(validador: UsuarioEntity): ValidadorViewM
 @Composable
 fun AppNavigation(authViewModel: AuthViewModel) {
     val context = LocalContext.current.applicationContext
+    val activity = LocalContext.current as Activity
     val navController = rememberNavController()
 
     val cerrarSesion: () -> Unit = {
-        authViewModel.cerrarSesion()
-        navController.navigate(Ruta.Login.ruta) { popUpTo(0) { inclusive = true } }
+        authViewModel.cerrarSesion(activity)
+
+        navController.navigate(Ruta.Login.ruta) {
+            popUpTo(0) {
+                inclusive = true
+            }
+            launchSingleTop = true
+        }
     }
 
     NavHost(navController = navController, startDestination = Ruta.Login.ruta) {
@@ -87,6 +95,7 @@ fun AppNavigation(authViewModel: AuthViewModel) {
 
             if(solicitante.rol != RolUsuario.SOLICITANTE){
                 Text("Acceso no autorizado")
+                return@composable
             }
 
             val solicitanteViewModel: SolicitanteViewModel = viewModel(
@@ -157,7 +166,13 @@ fun AppNavigation(authViewModel: AuthViewModel) {
         composable(Ruta.GestionInventario.ruta) {
             val usuario by authViewModel.usuarioActual.collectAsState()
             val validador = usuario ?: return@composable
-            if (validador.departamento == null) return@composable
+            if (
+                validador.rol != RolUsuario.VALIDADOR ||
+                validador.departamento == null
+            ) {
+                Text("Acceso no autorizado")
+                return@composable
+            }
 
             GestionInventarioScreen(
                 viewModel = rememberValidadorViewModel(validador),
@@ -166,6 +181,13 @@ fun AppNavigation(authViewModel: AuthViewModel) {
         }
 
         composable(Ruta.Admin.ruta) {
+            val usuario by authViewModel.usuarioActual.collectAsState()
+
+            if (usuario?.rol != RolUsuario.ADMIN) {
+                Text("Acceso no autorizado")
+                return@composable
+            }
+
             val context = LocalContext.current.applicationContext
             val adminViewModel: AdminViewModel = viewModel(
                 factory = AdminViewModelFactory(context)

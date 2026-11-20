@@ -20,7 +20,7 @@ import com.validador_actividades_duoc.data.local.entity.UsuarioEntity
         RequerimientoEntity::class,
         AdjuntoEntity::class
     ],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
