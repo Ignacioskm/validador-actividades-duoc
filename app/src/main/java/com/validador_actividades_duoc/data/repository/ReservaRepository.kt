@@ -156,13 +156,21 @@ class ReservaRepository(private val db: AppDatabase) {
     }
 
     // 3. el admin valida definitivamente la actividad
-    suspend fun confirmarPorAdmin(reservaId: Long): Result<Unit> = runCatching {
+    suspend fun confirmarPorAdmin(reservaId: Long,excepcional: Boolean = false): Result<Unit> = runCatching {
         db.withTransaction {
             val reservaConReqs = reservaDao.obtenerPorId(reservaId)
                 ?: error("La solicitud no existe")
 
             val reserva = reservaConReqs.reserva
-            check(reserva.estado == EstadoReserva.PENDIENTE_ADMIN) {
+
+            val puedeConfirmar = if (excepcional) {
+                reserva.estado == EstadoReserva.PENDIENTE ||
+                        reserva.estado == EstadoReserva.PENDIENTE_ADMIN
+            } else {
+                reserva.estado == EstadoReserva.PENDIENTE_ADMIN
+            }
+
+            check(puedeConfirmar) {
                 "Esta solicitud no está lista para confirmación final"
             }
 
