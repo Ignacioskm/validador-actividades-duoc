@@ -17,6 +17,7 @@ import com.validador_actividades_duoc.notifications.NotificadorEventos
 import com.validador_actividades_duoc.ui.theme.DuocTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.validador_actividades_duoc.data.repository.FirebaseAuthRepository
 
 class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels {
@@ -24,7 +25,10 @@ class MainActivity : ComponentActivity() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 val database = AppContainer.provideDatabase(applicationContext)
                 @Suppress("UNCHECKED_CAST")
-                return AuthViewModel(database.usuarioDao()) as T
+                return AuthViewModel(
+                    usuarioDao = database.usuarioDao(),
+                    authRepository = FirebaseAuthRepository()
+                ) as T
             }
         }
     }

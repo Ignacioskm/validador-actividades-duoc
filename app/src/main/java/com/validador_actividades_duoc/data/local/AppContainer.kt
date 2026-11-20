@@ -10,11 +10,31 @@ import com.validador_actividades_duoc.data.repository.ReservaRepository
 import com.validador_actividades_duoc.domain.model.Departamento
 import com.validador_actividades_duoc.domain.model.RolUsuario
 import java.time.LocalDate
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 object AppContainer {
 
     @Volatile
     private var dbInstance: AppDatabase? = null
+
+
+    private val MIGRATION_3_4 = object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL(
+                "ALTER TABLE usuarios ADD COLUMN firebaseUid TEXT"
+            )
+
+            db.execSQL(
+                """
+            CREATE UNIQUE INDEX IF NOT EXISTS
+            index_usuarios_firebaseUid
+            ON usuarios(firebaseUid)
+            """.trimIndent()
+            )
+        }
+    }
+
 
     fun provideDatabase(context: Context): AppDatabase =
         dbInstance ?: synchronized(this) {
@@ -23,7 +43,7 @@ object AppContainer {
                 AppDatabase::class.java,
                 "validador_duoc_db"
             )
-                .fallbackToDestructiveMigration()   // solo en desarrollo
+                .addMigrations(MIGRATION_3_4)
                 .build()
                 .also { dbInstance = it }
         }

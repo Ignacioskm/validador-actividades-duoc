@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "972544120171",
+    "project_id": "vali-duoc",
+    "storage_bucket": "vali-duoc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:972544120171:android:d852b1cc2fe5881d86e82e",
+        "android_client_info": {
+          "package_name": "com.validador_actividades_duoc"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "972544120171-r3qvlgqn52k7sh2ol0s7ibrfnvu17610.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.validador_actividades_duoc",
+            "certificate_hash": "8a62a4c47f45d78a011dbe3b45fe91c47c696d2d"
+          }
+        },
+        {
+          "client_id": "972544120171-m77jitfaj6j9ehh2usn77e4dnvqadek1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDgXBgtSHKEK9qmnne6odFHIniHNuEJ-sU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "972544120171-m77jitfaj6j9ehh2usn77e4dnvqadek1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
