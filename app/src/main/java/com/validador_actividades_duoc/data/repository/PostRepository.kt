@@ -1,10 +1,12 @@
 package com.validador_actividades_duoc.data.repository
 
+import com.validador_actividades_duoc.data.remote.RecursoDto
 import com.validador_actividades_duoc.data.remote.RetrofitInstance
-import com.validador_actividades_duoc.domain.model.Post
 
 class PostRepository {
-    suspend fun getPosts(): List<Post> {
-        return RetrofitInstance.api.getPosts()
+    suspend fun getRecursos(): Result<List<RecursoDto>> {
+        return runCatching {
+            RetrofitInstance.inventarioApi.obtenerRecursos()
+        }
     }
 }

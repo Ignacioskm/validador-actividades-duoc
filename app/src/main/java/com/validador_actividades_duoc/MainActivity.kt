@@ -19,6 +19,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.validador_actividades_duoc.data.repository.FirebaseAuthRepository
 
+import com.validador_actividades_duoc.data.remote.RetrofitInstance
+
 class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels {
         object : ViewModelProvider.Factory {
@@ -55,6 +57,30 @@ class MainActivity : ComponentActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             AppContainer.sembrarDatosIniciales(applicationContext)
         }
+
+        // --- PRUEBA TEMPORAL DE CONEXIÓN AL BACKEND ---
+        lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val recursos = RetrofitInstance.inventarioApi.obtenerRecursos()
+                android.util.Log.d("TEST_API", "Conectado! Recursos recibidos: ${recursos.size} -> $recursos")
+            } catch (e: java.net.SocketTimeoutException) {
+                android.util.Log.e(
+                    "TEST_API",
+                    "Timeout conectando al backend en ${RetrofitInstance.getBaseUrl()}. " +
+                    "Asegúrate de que el servidor local (Node.js en puerto 3000) esté iniciado y que la dirección IP sea accesible desde el dispositivo/emulador.",
+                    e
+                )
+            } catch (e: java.net.ConnectException) {
+                android.util.Log.e(
+                    "TEST_API",
+                    "No se pudo conectar al backend en ${RetrofitInstance.getBaseUrl()}. Servidor no disponible o conexión rechazada.",
+                    e
+                )
+            } catch (e: Exception) {
+                android.util.Log.e("TEST_API", "Error conectando al backend en ${RetrofitInstance.getBaseUrl()}", e)
+            }
+        }
+        // ----------------------------------------------
 
         // Notificaciones según el usuario con sesión iniciada
         lifecycleScope.launch {
