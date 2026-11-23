@@ -16,8 +16,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import kotlinx.coroutines.delay
 
-import androidx.navigation.NavHostController
 
 // Importaciones locales del proyecto
 import com.validador_actividades_duoc.data.local.AppContainer
@@ -39,7 +40,7 @@ import com.validador_actividades_duoc.ui.screens.solicitante.SolicitanteViewMode
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResumenEventosScreen(
-    navController: NavHostController, // <-- AGREGAR ESTA LÍNEA
+    navController: NavController,
     adminId: Long = 1L,
     onCerrarSesion: () -> Unit,
     viewModel: AdminViewModel = viewModel(factory = AdminViewModelFactory(LocalContext.current))
@@ -49,6 +50,8 @@ fun ResumenEventosScreen(
     val confirmados by viewModel.eventosConfirmados.collectAsState()
     val busqueda by viewModel.busqueda.collectAsState()
     val inventario by viewModel.inventarioGlobal.collectAsState()
+    val cargandoInventario by viewModel.cargandoInventario.collectAsState()
+    val errorInventario by viewModel.errorInventario.collectAsState()
     val mensaje by viewModel.mensaje.collectAsState()
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -73,6 +76,17 @@ fun ResumenEventosScreen(
             viewModel.mensajeMostrado()
         }
     }
+
+    LaunchedEffect(pestañaSeleccionada) {
+        if (pestañaSeleccionada == 2) {
+            viewModel.cargarInventarioRemoto(silencioso = inventario.isNotEmpty())
+            while (true) {
+                delay(5_000)
+                viewModel.cargarInventarioRemoto(silencioso = true)
+            }
+        }
+    }
+
 
     // --- FLUIDO DE NAVEGACIÓN PARA RESERVAS DEL ADMIN ---
     if (mostrarWizardAdmin) {
@@ -106,14 +120,6 @@ fun ResumenEventosScreen(
                         }
                     },
                     actions = {
-                        // ---> NUEVO BOTÓN DE PRUEBA PARA LA API <---
-                        Button(
-                            onClick = { navController.navigate("posts") },
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary)
-                        ) {
-                            Text("Ver Posts")
-                        }
-
                         Spacer(modifier = Modifier.width(8.dp))
 
                         // Botón de Reserva personalizado usando DuocPrimaryButton
@@ -169,11 +175,33 @@ fun ResumenEventosScreen(
                         eventos = confirmados
                     )
 
-                    2 -> GestionInventarioGlobal(
-                        inventario = inventario,
-                        onEditarStock = { recursoAEditar = it },
-                        onNuevoRecursoClick = { mostrarNuevoRecurso = true }
-                    )
+                    2 -> when {
+                        cargandoInventario -> {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                        errorInventario != null -> {
+                            Column(
+                                modifier = Modifier.fillMaxSize().padding(16.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(errorInventario!!, color = MaterialTheme.colorScheme.error)
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Button(onClick = { viewModel.cargarInventarioRemoto() }) {
+                                    Text("Reintentar")
+                                }
+                            }
+                        }
+                        else -> {
+                            GestionInventarioGlobal(
+                                inventario = inventario,
+                                onEditarStock = { recursoAEditar = it },
+                                onNuevoRecursoClick = { mostrarNuevoRecurso = true }
+                            )
+                        }
+                    }
                 }
             }
         }

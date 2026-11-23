@@ -7,6 +7,9 @@ import androidx.lifecycle.viewModelScope
 import com.validador_actividades_duoc.data.local.AppContainer
 import com.validador_actividades_duoc.data.local.entity.RecursoInventarioEntity
 import com.validador_actividades_duoc.data.local.entity.ReservaConRequerimientos
+import com.validador_actividades_duoc.data.remote.ActualizarStockRequest
+import com.validador_actividades_duoc.data.remote.CrearRecursoRequest
+import com.validador_actividades_duoc.data.remote.RetrofitInstance
 import com.validador_actividades_duoc.data.repository.InventarioRepository
 import com.validador_actividades_duoc.data.repository.ReservaRepository
 import com.validador_actividades_duoc.domain.model.Departamento
@@ -45,11 +48,43 @@ class AdminViewModel(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    // El inventario pulento, aca salen todos los recursos disponibles
-    val inventarioGlobal: StateFlow<List<RecursoInventarioEntity>> =
-        inventarioRepository.recursosDisponibles
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    // Estados para el inventario remoto desde AWS EC2 / Oracle
+    private val _inventarioGlobal = MutableStateFlow<List<RecursoInventarioEntity>>(emptyList())
+    val inventarioGlobal: StateFlow<List<RecursoInventarioEntity>> = _inventarioGlobal.asStateFlow()
 
+    private val _cargandoInventario = MutableStateFlow(false)
+    val cargandoInventario: StateFlow<Boolean> = _cargandoInventario.asStateFlow()
+
+    private val _errorInventario = MutableStateFlow<String?>(null)
+    val errorInventario: StateFlow<String?> = _errorInventario.asStateFlow()
+
+    init {
+        cargarInventarioRemoto()
+    }
+
+    fun cargarInventarioRemoto(silencioso: Boolean = false) {
+        viewModelScope.launch {
+            if (!silencioso) {
+                _cargandoInventario.value = true
+                _errorInventario.value = null
+            }
+            try {
+                val recursos = RetrofitInstance.inventarioApi.obtenerRecursos()
+                _inventarioGlobal.value = recursos
+                    .filter { it.activo }
+                    .map { it.toEntity() }
+                _errorInventario.value = null
+            } catch (e: Exception) {
+                if (!silencioso) {
+                    _errorInventario.value = "Error al cargar inventario: ${e.localizedMessage ?: "sin conexión"}"
+                }
+            } finally {
+                if (!silencioso) {
+                    _cargandoInventario.value = false
+                }
+            }
+        }
+    }
     // Estado para notificaciones visuales
     private val _mensaje = MutableStateFlow<String?>(null)
     val mensaje: StateFlow<String?> = _mensaje.asStateFlow()
@@ -81,17 +116,40 @@ class AdminViewModel(
 
     fun editarStockGlobal(recursoId: Long, nuevoStock: Int) {
         viewModelScope.launch {
-            inventarioRepository.editarStock(recursoId, nuevoStock)
-                .onSuccess { _mensaje.value = "Stock actualizado correctamente" }
-                .onFailure { _mensaje.value = it.message ?: "Error al actualizar stock" }
+            try {
+                val actualizado = RetrofitInstance.inventarioApi.actualizarStock(
+                    id = recursoId,
+                    body = ActualizarStockRequest(stockTotal = nuevoStock)
+                ).toEntity()
+
+                _inventarioGlobal.value = _inventarioGlobal.value.map {
+                    if (it.id == recursoId) actualizado else it
+                }
+                _mensaje.value = "Stock actualizado en Oracle Cloud"
+            } catch (e: Exception) {
+                _mensaje.value = "Error al actualizar stock: ${e.localizedMessage ?: "sin conexión"}"
+            }
         }
     }
 
     fun crearRecursoGlobal(departamento: Departamento, nombre: String, stock: Int) {
         viewModelScope.launch {
-            inventarioRepository.crearRecurso(departamento, nombre, stock)
-                .onSuccess { _mensaje.value = "Recurso añadido a ${departamento.etiqueta}" }
-                .onFailure { _mensaje.value = it.message ?: "Error al crear recurso" }
+            try {
+                val creado = RetrofitInstance.inventarioApi.crearRecurso(
+                    CrearRecursoRequest(
+                        departamento = departamento.name,
+                        nombreItem = nombre.trim(),
+                        stockTotal = stock
+                    )
+                ).toEntity()
+
+                _inventarioGlobal.value = (_inventarioGlobal.value + creado)
+                    .sortedWith(compareBy({ it.departamento.name }, { it.nombreItem }))
+
+                _mensaje.value = "Recurso añadido en Oracle Cloud (${departamento.etiqueta})"
+            } catch (e: Exception) {
+                _mensaje.value = "Error al crear recurso: ${e.localizedMessage ?: "sin conexión"}"
+            }
         }
     }
 

@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit
 object RetrofitInstance {
     // http://127.0.0.1:3000/ apunta al localhost de tu PC desde el Emulador de Android Studio.
     // Si usas un dispositivo físico en la misma red Wi-Fi, cambia la URL a la IP local de tu PC (ej: "http://192.168.1.X:3000/")
-    private const val DEFAULT_BASE_URL = "http://127.0.0.1:3000/"
+    private const val DEFAULT_BASE_URL = "http://52.1.226.180:3000/"
 
     @Volatile
     private var baseUrl: String = DEFAULT_BASE_URL
