@@ -3,6 +3,7 @@ package com.validador_actividades_duoc.ui.screens.solicitante
 import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -63,7 +63,7 @@ import com.validador_actividades_duoc.domain.util.BLOQUES
 import com.validador_actividades_duoc.domain.util.BloqueHorario
 import com.validador_actividades_duoc.ui.components.StatusBadge
 import com.validador_actividades_duoc.ui.components.TarjetaReserva
-import com.validador_actividades_duoc.ui.theme.DuocTheme
+import com.validador_actividades_duoc.ui.theme.*
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
@@ -102,19 +102,27 @@ fun CalendarioScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
+            Column {
             TopAppBar(
                 title = {
                     Column {
+                        Text("VALI-DUOC", color = DuocYellow,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold)
                         Text(
                             text = "Hola, $nombreUsuario",
+                            color = DuocWhite,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
                             text = "Gestión de Reservas Duoc",
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = DuocGrayLight
                         )
                     }
                 },
@@ -123,22 +131,27 @@ fun CalendarioScreen(
                         Icon(
                             imageVector = Icons.Default.ExitToApp,
                             contentDescription = "Cerrar sesión",
-                            tint = MaterialTheme.colorScheme.error
+                            tint = DuocYellow
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
+                    containerColor = DuocBlackCharcoal,
+                    titleContentColor = DuocWhite,
+                    actionIconContentColor = DuocYellow
                 )
             )
+            HorizontalDivider(thickness = 3.dp, color = DuocYellow)
+            }
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = { onAbrirWizard(uiState.fechaSeleccionada, null) },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
                 text = { Text("Nueva Solicitud", fontWeight = FontWeight.Bold) },
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary
+                containerColor = DuocYellow,
+                contentColor = DuocBlackCharcoal,
+                shape = RoundedCornerShape(16.dp)
             )
         }
     ) { paddingValues ->
@@ -154,7 +167,7 @@ fun CalendarioScreen(
                 }
             )
 
-            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
+
 
             LazyColumn(
                 modifier = Modifier
@@ -165,12 +178,21 @@ fun CalendarioScreen(
             ) {
 
                 item {
-                    Text(
-                        text = "Disponibilidad (${uiState.fechaSeleccionada.format(DateTimeFormatter.ofPattern("dd 'de' MMMM", Locale("es", "ES")))})",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(Modifier.width(4.dp).height(36.dp)
+                            .clip(RoundedCornerShape(4.dp)).background(DuocYellow))
+                        Spacer(Modifier.width(10.dp))
+                        Column {
+                            Text("Disponibilidad", style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold)
+                            Text(
+                                uiState.fechaSeleccionada.format(DateTimeFormatter.ofPattern("EEEE, d 'de' MMMM", Locale("es", "CL")))
+                                    .replaceFirstChar { it.uppercase() },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
 
 
@@ -270,7 +292,10 @@ fun SeccionSelectorSemana(
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .clip(RoundedCornerShape(18.dp))
             .background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(18.dp))
             .padding(vertical = 8.dp)
     ) {
         Row(
@@ -280,7 +305,8 @@ fun SeccionSelectorSemana(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { inicioSemana = inicioSemana.minusWeeks(1) }) {
+            IconButton(onClick = { inicioSemana = inicioSemana.minusWeeks(1) },
+                modifier = Modifier.clip(CircleShape).background(DuocYellow.copy(alpha = 0.16f))) {
                 Icon(Icons.Default.ChevronLeft, contentDescription = "Semana anterior")
             }
 
@@ -291,44 +317,49 @@ fun SeccionSelectorSemana(
                 fontWeight = FontWeight.Bold
             )
 
-            IconButton(onClick = { inicioSemana = inicioSemana.plusWeeks(1) }) {
+            IconButton(onClick = { inicioSemana = inicioSemana.plusWeeks(1) },
+                modifier = Modifier.clip(CircleShape).background(DuocYellow.copy(alpha = 0.16f))) {
                 Icon(Icons.Default.ChevronRight, contentDescription = "Semana siguiente")
             }
         }
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        LazyRow(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceAround
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
-            items(7) { offset ->
+            repeat(7) { offset ->
                 val dia = inicioSemana.plusDays(offset.toLong())
                 val esSeleccionado = dia == fechaSeleccionada
 
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
+                        .weight(1f)
                         .clip(RoundedCornerShape(12.dp))
                         .background(
-                            if (esSeleccionado) MaterialTheme.colorScheme.primary
+                            if (esSeleccionado) DuocYellow
                             else Color.Transparent
                         )
                         .clickable { onFechaSeleccionada(dia) }
-                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .padding(horizontal = 2.dp, vertical = 10.dp)
                 ) {
                     Text(
                         text = dia.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale("es", "ES")).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = if (esSeleccionado) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (esSeleccionado) DuocBlackCharcoal else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = dia.dayOfMonth.toString(),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = if (esSeleccionado) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                        color = if (esSeleccionado) DuocBlackCharcoal else MaterialTheme.colorScheme.onSurface
                     )
+                    Spacer(Modifier.height(4.dp))
+                    Box(Modifier.size(4.dp).clip(CircleShape).background(
+                        if (esSeleccionado) DuocBlackCharcoal else Color.Transparent))
                 }
             }
         }
@@ -354,7 +385,7 @@ fun TarjetaBloqueHorario(
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (estaOcupado) {
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.25f)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
             } else {
                 MaterialTheme.colorScheme.surface
             }
@@ -371,10 +402,10 @@ fun TarjetaBloqueHorario(
             Box(
                 modifier = Modifier
                     .size(36.dp)
-                    .clip(CircleShape)
+                    .clip(RoundedCornerShape(10.dp))
                     .background(
-                        if (estaOcupado) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                        if (estaOcupado) MaterialTheme.colorScheme.surfaceVariant
+                        else DuocYellow.copy(alpha = 0.22f)
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -382,7 +413,7 @@ fun TarjetaBloqueHorario(
                     text = "B$numeroBloque",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (estaOcupado) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -391,14 +422,15 @@ fun TarjetaBloqueHorario(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = "${bloqueHora.inicio} - ${bloqueHora.fin}",
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = if (estaOcupado) reserva!!.reserva.nombreActividad else "Disponible - Toca para solicitar",
+                    text = if (estaOcupado) reserva!!.reserva.nombreActividad else "Disponible · Toca para solicitar",
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (estaOcupado) FontWeight.Bold else FontWeight.Normal,
-                    color = if (estaOcupado) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary,
+                    color = if (estaOcupado) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -406,6 +438,9 @@ fun TarjetaBloqueHorario(
 
             if (estaOcupado) {
                 StatusBadge(estado = reserva!!.reserva.estado)
+            } else {
+                Icon(Icons.Default.ChevronRight, contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
