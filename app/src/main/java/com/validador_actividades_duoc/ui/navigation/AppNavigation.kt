@@ -28,9 +28,8 @@ import com.validador_actividades_duoc.ui.screens.validador.GestionInventarioScre
 import com.validador_actividades_duoc.ui.screens.validador.ValidadorViewModel
 import com.validador_actividades_duoc.ui.screens.validador.ValidadorViewModelFactory
 import android.app.Activity
-// retrofit
-import com.validador_actividades_duoc.ui.screens.posts.PostScreen
-import com.validador_actividades_duoc.ui.screens.posts.PostViewModel
+
+import androidx.activity.compose.LocalActivity
 
 sealed class Ruta(val ruta: String) {
     object Login : Ruta("login")
@@ -56,7 +55,7 @@ private fun rememberValidadorViewModel(validador: UsuarioEntity): ValidadorViewM
 @Composable
 fun AppNavigation(authViewModel: AuthViewModel) {
     val context = LocalContext.current.applicationContext
-    val activity = LocalContext.current as Activity
+    val activity = LocalActivity.current as Activity
     val navController = rememberNavController()
 
     val cerrarSesion: () -> Unit = {
@@ -198,10 +197,6 @@ fun AppNavigation(authViewModel: AuthViewModel) {
                 onCerrarSesion = cerrarSesion,
                 viewModel = adminViewModel
             )
-        }
-
-        composable("posts") {
-            PostScreen(viewModel = viewModel())
         }
     }
 }
