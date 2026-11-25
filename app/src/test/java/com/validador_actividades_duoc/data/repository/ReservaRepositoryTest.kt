@@ -82,7 +82,11 @@ class ReservaRepositoryTest : StringSpec({
             bloqueInicio = 1,
             bloqueFin = 2
         )
-        val reservaBloqueInvalido = reservaSinNombre.copy(nombreActividad = "Charla", bloqueInicio = 5, bloqueFin = 2)
+        val reservaBloqueInvalido = reservaSinNombre.copy(
+            nombreActividad = "Charla",
+            bloqueInicio = 5,
+            bloqueFin = 2
+        )
 
         repository.crearReserva(reservaSinNombre, mapOf(1L to 1)).isFailure shouldBe true
         repository.crearReserva(reservaBloqueInvalido, mapOf(1L to 1)).isFailure shouldBe true
@@ -133,7 +137,7 @@ class ReservaRepositoryTest : StringSpec({
         )
         coEvery { inventarioDao.obtenerCantidadOcupada(10L, fechaFuturaValida, any()) } returns 2
 
-        val resultado = repository.crearReserva(reserva, mapOf(10L to 2)) // Queda 1, pide 2
+        val resultado = repository.crearReserva(reserva, mapOf(10L to 2))
 
         resultado.isFailure shouldBe true
         resultado.exceptionOrNull()?.message shouldContain "Stock insuficiente"

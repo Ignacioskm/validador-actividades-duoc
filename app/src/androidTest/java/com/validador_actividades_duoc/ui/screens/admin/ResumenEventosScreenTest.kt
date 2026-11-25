@@ -18,6 +18,7 @@ import com.validador_actividades_duoc.data.local.AppDatabase
 import com.validador_actividades_duoc.data.local.entity.RecursoInventarioEntity
 import com.validador_actividades_duoc.data.local.entity.ReservaEntity
 import com.validador_actividades_duoc.data.local.entity.UsuarioEntity
+import com.validador_actividades_duoc.data.remote.RetrofitInstance
 import com.validador_actividades_duoc.data.repository.InventarioRepository
 import com.validador_actividades_duoc.data.repository.ReservaRepository
 import com.validador_actividades_duoc.domain.model.Departamento
@@ -42,12 +43,16 @@ class ResumenEventosScreenTest {
     private lateinit var reservaRepository: ReservaRepository
     private lateinit var inventarioRepository: InventarioRepository
     private lateinit var adminViewModel: AdminViewModel
+    private lateinit var urlOriginal: String
     private var solicitanteId: Long = 0L
     private var validadorId: Long = 0L
     private var recursoId: Long = 0L
 
     @Before
     fun setUp() {
+        urlOriginal = RetrofitInstance.getBaseUrl()
+        RetrofitInstance.setBaseUrl("http://127.0.0.1:59999/")
+
         db = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
             AppDatabase::class.java
@@ -92,6 +97,7 @@ class ResumenEventosScreenTest {
     @After
     fun tearDown() {
         db.close()
+        RetrofitInstance.setBaseUrl(urlOriginal)
     }
 
     @Test

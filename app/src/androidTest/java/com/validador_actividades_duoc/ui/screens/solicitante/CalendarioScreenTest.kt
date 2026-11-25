@@ -4,6 +4,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToIndexAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -112,7 +114,7 @@ class CalendarioScreenTest {
         assertEquals(LocalDate.now(), fechaRecibida)
         assertEquals(1, bloqueRecibido)
 
-        composeTestRule.onNodeWithText("Nueva Solicitud").performClick()
+        composeTestRule.onNodeWithText("Nueva Solicitud", useUnmergedTree = true).performClick()
         assertEquals(LocalDate.now(), fechaRecibida)
         assertNull(bloqueRecibido)
     }
@@ -148,7 +150,7 @@ class CalendarioScreenTest {
             viewModel.uiState.value.misSolicitudes.isNotEmpty()
         }
 
-        composeTestRule.onNodeWithText("Charla de Innovación").assertIsDisplayed()
+        composeTestRule.onAllNodesWithText("Charla de Innovación").onFirst().assertIsDisplayed()
 
         composeTestRule.onNodeWithContentDescription("Cerrar sesión").performClick()
         assertTrue(sesionCerrada)
