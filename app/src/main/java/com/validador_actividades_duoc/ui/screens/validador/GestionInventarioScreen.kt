@@ -1,6 +1,13 @@
 package com.validador_actividades_duoc.ui.screens.validador
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.text.font.FontWeight
+import com.validador_actividades_duoc.ui.theme.*
+import androidx.compose.material.icons.filled.ArrowBack
+
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -28,6 +35,7 @@ fun GestionInventarioScreen(
     val snackbarHostState = remember { SnackbarHostState() }
 
     var mostrarNuevo by remember { mutableStateOf(false) }
+    var recursoARetirar by remember { mutableStateOf<RecursoInventarioEntity?>(null) }
     var recursoAEditar by remember { mutableStateOf<RecursoInventarioEntity?>(null) }
 
     LaunchedEffect(mensaje) {
@@ -40,20 +48,34 @@ fun GestionInventarioScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("Inventario del área", style = MaterialTheme.typography.titleLarge)
-                        Text(viewModel.departamento.etiqueta, style = MaterialTheme.typography.bodyMedium)
-                    }
-                },
-                navigationIcon = { TextButton(onClick = onVolver) { Text("Volver") } }
-            )
+            Column(Modifier.fillMaxWidth().background(DuocBlackCharcoal)) {
+                TopAppBar(
+                    title = {
+                        Column {
+                            Text("VALI-DUOC", color = DuocYellow, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                            Text("Inventario del área", color = DuocWhite, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                            Text(viewModel.departamento.etiqueta, color = DuocGrayLight, style = MaterialTheme.typography.bodySmall)
+                        }
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onVolver) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver", tint = DuocYellow)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(containerColor = DuocBlackCharcoal)
+                )
+                HorizontalDivider(thickness = 3.dp, color = DuocYellow)
+            }
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { mostrarNuevo = true }) {
-                Icon(Icons.Default.Add, contentDescription = "Agregar recurso")
-            }
+            ExtendedFloatingActionButton(
+                onClick = { mostrarNuevo = true },
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Agregar recurso", fontWeight = FontWeight.Bold) },
+                containerColor = DuocYellow,
+                contentColor = DuocBlackCharcoal,
+                shape = RoundedCornerShape(16.dp)
+            )
         }
     ) { padding ->
         Column(
@@ -63,40 +85,71 @@ fun GestionInventarioScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Recursos (${inventario.size})", style = MaterialTheme.typography.titleLarge)
+            Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, DuocGrayMedium.copy(alpha = 0.25f))
+    ) {
+                Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(Modifier.background(DuocYellow.copy(alpha = 0.22f), RoundedCornerShape(10.dp)).padding(12.dp)) {
+                        Text(inventario.size.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    }
+                    Column {
+                        Text("Recursos registrados", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text("Inventario de tu departamento", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
 
             if (inventario.isEmpty()) {
                 Text("Aún no tienes recursos. Usa el botón + para agregar.")
             }
 
-            LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp), contentPadding = PaddingValues(bottom = 84.dp)) {
                 items(inventario, key = { it.id }) { recurso ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(recurso.nombreItem, style = MaterialTheme.typography.bodyLarge)
-                                Text(
-                                    "Stock total: ${recurso.stockTotal} unidades",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
+                    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, DuocGrayMedium.copy(alpha = 0.25f))
+    ) {
+                        Column(Modifier.fillMaxWidth().padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.width(4.dp).height(32.dp).background(DuocYellow, RoundedCornerShape(4.dp)))
+                                Text(recurso.nombreItem, modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                             }
-                            IconButton(onClick = { recursoAEditar = recurso }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Editar stock")
-                            }
-                            IconButton(onClick = { viewModel.retirarRecurso(recurso.id) }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Retirar recurso")
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Box(Modifier.weight(1f).background(DuocYellow.copy(alpha = 0.16f), RoundedCornerShape(8.dp)).padding(8.dp)) {
+                                    Text("Stock total: ${recurso.stockTotal} unidades", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                                }
+                                IconButton(onClick = { recursoAEditar = recurso }, modifier = Modifier.background(DuocYellow.copy(alpha = 0.18f), RoundedCornerShape(10.dp))) {
+                                    Icon(Icons.Default.Edit, contentDescription = "Editar stock", tint = MaterialTheme.colorScheme.onSurface)
+                                }
+                                IconButton(onClick = { recursoARetirar = recurso }, modifier = Modifier.background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f), RoundedCornerShape(10.dp))) {
+                                    Icon(Icons.Default.Delete, contentDescription = "Retirar recurso", tint = MaterialTheme.colorScheme.error)
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    recursoARetirar?.let { recurso ->
+        AlertDialog(
+            onDismissRequest = { recursoARetirar = null },
+            title = { Text("Retirar recurso") },
+            text = { Text("¿Quieres retirar ${recurso.nombreItem} del inventario de tu área?") },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.retirarRecurso(recurso.id)
+                    recursoARetirar = null
+                }, colors = ButtonDefaults.buttonColors(containerColor = StatusRejected, contentColor = DuocWhite)) { Text("Retirar") }
+            },
+            dismissButton = { TextButton(onClick = { recursoARetirar = null }) { Text("Cancelar") } }
+        )
     }
 
     if (mostrarNuevo) {
@@ -118,7 +171,8 @@ fun GestionInventarioScreen(
             },
             confirmButton = {
                 Button(
-                    enabled = nombre.isNotBlank() && stock.isNotBlank(),
+                    enabled = nombre.isNotBlank() && stock.toIntOrNull() != null,
+                    colors = ButtonDefaults.buttonColors(containerColor = DuocYellow, contentColor = DuocBlackCharcoal),
                     onClick = {
                         viewModel.crearRecurso(nombre, stock.toIntOrNull() ?: 0)
                         mostrarNuevo = false
@@ -144,7 +198,8 @@ fun GestionInventarioScreen(
             },
             confirmButton = {
                 Button(
-                    enabled = nuevoStock.isNotBlank(),
+                    enabled = nuevoStock.toIntOrNull() != null,
+                    colors = ButtonDefaults.buttonColors(containerColor = DuocYellow, contentColor = DuocBlackCharcoal),
                     onClick = {
                         viewModel.editarStock(recurso.id, nuevoStock.toIntOrNull() ?: recurso.stockTotal)
                         recursoAEditar = null
