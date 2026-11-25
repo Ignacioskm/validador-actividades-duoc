@@ -1,6 +1,13 @@
 package com.validador_actividades_duoc.ui.screens.admin
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import com.validador_actividades_duoc.ui.theme.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -27,7 +34,6 @@ import com.validador_actividades_duoc.data.local.entity.ReservaConRequerimientos
 import com.validador_actividades_duoc.domain.model.Departamento
 import com.validador_actividades_duoc.domain.model.EstadoRequerimiento
 import com.validador_actividades_duoc.domain.util.BLOQUES
-import com.validador_actividades_duoc.ui.components.DuocPrimaryButton
 import com.validador_actividades_duoc.ui.components.FormTextField
 import com.validador_actividades_duoc.ui.components.StatusBadge
 
@@ -110,32 +116,53 @@ fun ResumenEventosScreen(
         // --- VISTA NORMAL DEL PANEL ADMINISTRADOR ---
         Scaffold(
             snackbarHost = { SnackbarHost(snackbarHostState) },
+            containerColor = MaterialTheme.colorScheme.background,
             topBar = {
-                TopAppBar(
-
-                    title = {
-                        Column {
-                            Text("Panel Administrador", style = MaterialTheme.typography.titleLarge)
-                            Text("Gestión General Duoc UC", style = MaterialTheme.typography.bodyMedium)
-                        }
-                    },
-                    actions = {
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Botón de Reserva personalizado usando DuocPrimaryButton
-                        DuocPrimaryButton(
-                            texto = "Reservar",
-                            onClick = { mostrarCalendarioAdmin = true },
-                            modificador = Modifier.width(130.dp)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(DuocBlackCharcoal)
+                ) {
+                    TopAppBar(
+                        title = {
+                            Column {
+                                Text("VALI-DUOC", color = DuocYellow,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold)
+                                Text("Panel Administrador", color = DuocWhite,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold)
+                                Text("Gestión General Duoc UC", color = DuocGrayLight,
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                        },
+                        actions = {
+                            IconButton(onClick = onCerrarSesion) {
+                                Icon(Icons.Default.ExitToApp,
+                                    contentDescription = "Cerrar sesión",
+                                    tint = DuocYellow)
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = DuocBlackCharcoal,
+                            titleContentColor = DuocWhite,
+                            actionIconContentColor = DuocYellow
                         )
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        TextButton(onClick = onCerrarSesion) {
-                            Text("Cerrar Sesión")
-                        }
+                    )
+                    Button(
+                        onClick = { mostrarCalendarioAdmin = true },
+                        modifier = Modifier.fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                            .heightIn(min = 44.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = coloresAccionAdmin()
+                    ) {
+                        Icon(Icons.Default.Add, contentDescription = null)
+                        Spacer(Modifier.width(8.dp))
+                        Text("Reservar", fontWeight = FontWeight.Bold)
                     }
-                )
+                    HorizontalDivider(thickness = 3.dp, color = DuocYellow)
+                }
             }
         ) { padding ->
             Column(
@@ -143,22 +170,47 @@ fun ResumenEventosScreen(
                     .fillMaxSize()
                     .padding(padding)
             ) {
-                TabRow(selectedTabIndex = pestañaSeleccionada) {
-                    Tab(
-                        selected = pestañaSeleccionada == 0,
-                        onClick = { pestañaSeleccionada = 0 },
-                        text = { Text("Por Confirmar (${pendientesAdmin.size})") }
+                TabRow(
+                    selectedTabIndex = pestañaSeleccionada,
+                    containerColor = MaterialTheme.colorScheme.surface,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                    indicator = { posiciones ->
+                        TabRowDefaults.Indicator(
+                            modifier = with(TabRowDefaults) {
+                                Modifier.tabIndicatorOffset(posiciones[pestañaSeleccionada])
+                            },
+                            color = DuocYellow,
+                            height = 3.dp
+                        )
+                    }
+                ) {
+                    val etiquetas = listOf(
+                        "Por Confirmar (${pendientesAdmin.size})",
+                        "Agenda (${confirmados.size})",
+                        "Inventario Global"
                     )
-                    Tab(
-                        selected = pestañaSeleccionada == 1,
-                        onClick = { pestañaSeleccionada = 1 },
-                        text = { Text("Agenda (${confirmados.size})") }
-                    )
-                    Tab(
-                        selected = pestañaSeleccionada == 2,
-                        onClick = { pestañaSeleccionada = 2 },
-                        text = { Text("Inventario Global") }
-                    )
+                    etiquetas.forEachIndexed { indice, etiqueta ->
+                        val seleccionada = pestañaSeleccionada == indice
+                        Tab(
+                            selected = seleccionada,
+                            onClick = { pestañaSeleccionada = indice },
+                            selectedContentColor = MaterialTheme.colorScheme.onSurface,
+                            unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            text = {
+                                Text(
+                                    etiqueta,
+                                    modifier = Modifier.background(
+                                        if (seleccionada) DuocYellow.copy(alpha = 0.18f)
+                                        else androidx.compose.ui.graphics.Color.Transparent,
+                                        RoundedCornerShape(10.dp)
+                                    ).padding(horizontal = 6.dp, vertical = 8.dp),
+                                    textAlign = TextAlign.Center,
+                                    fontWeight = if (seleccionada) FontWeight.Bold else FontWeight.Normal,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+                            }
+                        )
+                    }
                 }
 
                 when (pestañaSeleccionada) {
@@ -178,7 +230,7 @@ fun ResumenEventosScreen(
                     2 -> when {
                         cargandoInventario -> {
                             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator()
+                                CircularProgressIndicator(color = DuocYellow)
                             }
                         }
                         errorInventario != null -> {
@@ -189,7 +241,7 @@ fun ResumenEventosScreen(
                             ) {
                                 Text(errorInventario!!, color = MaterialTheme.colorScheme.error)
                                 Spacer(modifier = Modifier.height(12.dp))
-                                Button(onClick = { viewModel.cargarInventarioRemoto() }) {
+                                Button(onClick = { viewModel.cargarInventarioRemoto() }, colors = coloresAccionAdmin()) {
                                     Text("Reintentar")
                                 }
                             }
@@ -223,6 +275,7 @@ fun ResumenEventosScreen(
             },
             confirmButton = {
                 Button(
+                    colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
                     enabled = motivo.isNotBlank(),
                     onClick = {
                         viewModel.rechazarEvento(reservaConReq.reserva.id, motivo)
@@ -254,6 +307,7 @@ fun ResumenEventosScreen(
             },
             confirmButton = {
                 Button(
+                    colors = coloresAccionAdmin(),
                     enabled = nuevoStock.isNotBlank(),
                     onClick = {
                         viewModel.editarStockGlobal(recurso.id, nuevoStock.toIntOrNull() ?: recurso.stockTotal)
@@ -297,6 +351,7 @@ fun ResumenEventosScreen(
             },
             confirmButton = {
                 Button(
+                    colors = coloresAccionAdmin(),
                     enabled = nombre.isNotBlank() && stock.isNotBlank(),
                     onClick = {
                         viewModel.crearRecursoGlobal(departamentoSel, nombre, stock.toIntOrNull() ?: 1)
@@ -347,11 +402,20 @@ private fun ListaEventosConfirmados(
     eventos: List<ReservaConRequerimientos>
 ) {
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        FormTextField(
-            valor = busqueda,
-            alCambiarValor = onBusquedaChange,
-            etiqueta = "Buscar actividad o profesor...",
-            iconoInicio = { Icon(Icons.Default.Search, contentDescription = "Buscar") }
+        OutlinedTextField(
+            value = busqueda,
+            onValueChange = onBusquedaChange,
+            placeholder = { Text("Buscar actividad o profesor...") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedBorderColor = DuocYellow,
+                unfocusedBorderColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f)
+            )
         )
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -382,7 +446,12 @@ private fun TarjetaReservaAdmin(
     val desde = BLOQUES.getOrNull(reserva.bloqueInicio - 1)?.inicio?.toString() ?: ""
     val hasta = BLOQUES.getOrNull(reserva.bloqueFin - 1)?.fin?.toString() ?: ""
 
-    Card(modifier = Modifier.fillMaxWidth()) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+    ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -393,16 +462,31 @@ private fun TarjetaReservaAdmin(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Box(Modifier.width(4.dp).height(36.dp)
+                    .background(DuocYellow, RoundedCornerShape(2.dp)))
+                Spacer(Modifier.width(8.dp))
                 Text(
                     text = reserva.nombreActividad,
+                    fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
                     modifier = Modifier.weight(1f)
                 )
                 StatusBadge(estado = reserva.estado) // Badge general de la Reserva
             }
 
-            Text("Solicita: ${item.solicitante.nombre} (${item.solicitante.correo})")
-            Text("Fecha: ${reserva.fecha} ($desde a $hasta)")
+            Text("Solicita: ${item.solicitante.nombre} (${item.solicitante.correo})",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp),
+                color = DuocYellow.copy(alpha = 0.15f)
+            ) {
+                Text("Fecha: ${reserva.fecha} ($desde a $hasta)",
+                    modifier = Modifier.padding(10.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface)
+            }
 
             HorizontalDivider()
 
@@ -425,7 +509,8 @@ private fun TarjetaReservaAdmin(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(vertical = 4.dp)
+                        .background(MaterialTheme.colorScheme.background, RoundedCornerShape(8.dp))
+                        .padding(10.dp)
                 ) {
                     // Encabezado del área con su StatusBadge correspondiente
                     Row(
@@ -434,7 +519,8 @@ private fun TarjetaReservaAdmin(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = "• ${depto.etiqueta}:",
+                            text = "${depto.etiqueta}:",
+                            modifier = Modifier.weight(1f).padding(end = 8.dp),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         )
@@ -456,32 +542,28 @@ private fun TarjetaReservaAdmin(
             // Acciones del Administrador
             if (esPendiente) {
                 Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        onClick = onConfirmar,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Confirmar Actividad")
-                    }
-                    OutlinedButton(
-                        onClick = onRechazar,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("Rechazar")
-                    }
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    OutlinedButton(
-                        onClick = {
-                            mostrarDialogoExcepcional = true
-                        },
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Validar excepcionalmente")
+                        Button(
+                            onClick = onConfirmar,
+                            modifier = Modifier.weight(1f),
+                            colors = coloresAccionAdmin()
+                        ) { Text("Confirmar Actividad", textAlign = TextAlign.Center) }
+                        OutlinedButton(
+                            onClick = onRechazar,
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                        ) { Text("Rechazar") }
                     }
+                    OutlinedButton(
+                        onClick = { mostrarDialogoExcepcional = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        border = BorderStroke(1.dp, DuocYellow),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
+                    ) { Text("Validar excepcionalmente") }
                 }
             }
         }
@@ -505,6 +587,7 @@ private fun TarjetaReservaAdmin(
             },
             confirmButton = {
                 Button(
+                    colors = coloresAccionAdmin(),
                     onClick = {
                         mostrarDialogoExcepcional = false
                         onConfirmarExcepcional()
@@ -534,10 +617,15 @@ private fun GestionInventarioGlobal(
     onNuevoRecursoClick: () -> Unit
 ) {
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
-            FloatingActionButton(onClick = onNuevoRecursoClick) {
-                Icon(Icons.Default.Add, contentDescription = "Agregar recurso")
-            }
+            ExtendedFloatingActionButton(
+                onClick = onNuevoRecursoClick,
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Agregar recurso") },
+                containerColor = DuocYellow,
+                contentColor = DuocBlackCharcoal
+            )
         }
     ) { padding ->
         LazyColumn(
@@ -553,23 +641,31 @@ private fun GestionInventarioGlobal(
                     Text(
                         text = depto.etiqueta,
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(top = 8.dp)
                     )
                 }
                 items(recursos, key = { it.id }) { recurso ->
-                    Card(modifier = Modifier.fillMaxWidth()) {
+                    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f))
+    ) {
                         Row(
                             modifier = Modifier.padding(12.dp).fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column {
-                                Text(recurso.nombreItem, style = MaterialTheme.typography.bodyLarge)
-                                Text("Stock total: ${recurso.stockTotal} unid.")
+                            Column(Modifier.weight(1f)) {
+                                Text(recurso.nombreItem, style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Bold)
+                                Text("Stock total: ${recurso.stockTotal} unid.",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             IconButton(onClick = { onEditarStock(recurso) }) {
-                                Icon(Icons.Default.Edit, contentDescription = "Editar Stock")
+                                Icon(Icons.Default.Edit, contentDescription = "Editar Stock", tint = MaterialTheme.colorScheme.onSurface)
                             }
                         }
                     }
@@ -614,3 +710,10 @@ private fun DropdownMenuDepartamentos(
         }
     }
 }
+
+@Composable
+private fun coloresAccionAdmin() = ButtonDefaults.buttonColors(
+    containerColor = DuocYellow,
+    contentColor = DuocBlackCharcoal
+)
+
