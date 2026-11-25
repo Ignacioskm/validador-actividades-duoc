@@ -106,7 +106,7 @@ class GestionInventarioScreenTest {
             }
         }
 
-        composeTestRule.onNodeWithText("Agregar recurso").performClick()
+        composeTestRule.onNodeWithText("Agregar recurso", useUnmergedTree = true).performClick()
 
         composeTestRule.onNodeWithText("Nuevo recurso").assertIsDisplayed()
         composeTestRule.onNodeWithText("Guardar").assertIsNotEnabled()
