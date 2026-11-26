@@ -18,6 +18,7 @@ class InventarioRepositoryTest : StringSpec({
 
     fun crearDaoMock(): InventarioDao = mockk<InventarioDao>(relaxed = true).apply {
         every { obtenerRecursosDisponibles() } returns flowOf(emptyList())
+        every { observarPorDepartamento(any()) } returns flowOf(emptyList())
     }
 
     "recursosDisponibles emite la lista activa entregada por InventarioDao" {
@@ -78,6 +79,7 @@ class InventarioRepositoryTest : StringSpec({
         coVerify(exactly = 1) { dao.actualizarStock(1L, 10) }
 
         repo.editarStock(1L, -2).isFailure shouldBe true
+        coVerify(exactly = 0) { dao.actualizarStock(1L, -2) }
     }
 
     "retirarRecurso llama a desactivar en el DAO" {
