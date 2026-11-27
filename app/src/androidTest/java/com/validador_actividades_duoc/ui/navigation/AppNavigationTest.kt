@@ -2,6 +2,8 @@ package com.validador_actividades_duoc.ui.navigation
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -9,12 +11,11 @@ import androidx.compose.ui.test.performTextInput
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.validador_actividades_duoc.data.local.AppDatabase
-import com.validador_actividades_duoc.data.local.entity.UsuarioEntity
+import com.validador_actividades_duoc.data.remote.RetrofitInstance
 import com.validador_actividades_duoc.data.repository.FirebaseAuthRepository
 import com.validador_actividades_duoc.domain.model.RolUsuario
 import com.validador_actividades_duoc.ui.screens.auth.AuthViewModel
 import com.validador_actividades_duoc.ui.theme.DuocTheme
-import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -27,9 +28,13 @@ class AppNavigationTest {
 
     private lateinit var db: AppDatabase
     private lateinit var authViewModel: AuthViewModel
+    private lateinit var urlOriginal: String
 
     @Before
     fun setUp() {
+        urlOriginal = RetrofitInstance.getBaseUrl()
+        RetrofitInstance.setBaseUrl("http://127.0.0.1:59999/")
+
         db = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
             AppDatabase::class.java
@@ -45,11 +50,11 @@ class AppNavigationTest {
 
     @After
     fun tearDown() {
+        RetrofitInstance.setBaseUrl(urlOriginal)
         db.close()
     }
 
-    @Test
-    fun iniciaEnLoginYNavegaACalendarioSolicitanteEnModoDemo() {
+    private fun iniciarDemo(correo: String) {
         composeTestRule.setContent {
             DuocTheme {
                 AppNavigation(authViewModel = authViewModel)
@@ -60,74 +65,81 @@ class AppNavigationTest {
             !authViewModel.cargando.value
         }
 
-        composeTestRule.onNodeWithText("Continuar con Google").assertIsDisplayed()
-
         composeTestRule.onNodeWithText("Correo de demostración")
             .performScrollTo()
-            .performTextInput("profesor@duoc.cl")
+            .performTextInput(correo)
 
         composeTestRule.onNodeWithText("Ingresar en modo demo")
             .performScrollTo()
             .performClick()
+    }
+
+    @Test
+    fun iniciaEnLoginYNavegaACalendarioSolicitanteYCierraSesion() {
+        iniciarDemo("profesor@duoc.cl")
 
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             authViewModel.usuarioActual.value?.rol == RolUsuario.SOLICITANTE
         }
 
         composeTestRule.onNodeWithText("Gestión de Reservas Duoc").assertIsDisplayed()
+
+        composeTestRule.onNodeWithContentDescription("Cerrar sesión").performClick()
+
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            authViewModel.usuarioActual.value == null &&
+                    !authViewModel.cargando.value &&
+                    composeTestRule.onAllNodesWithText("Continuar con Google")
+                        .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Continuar con Google").assertIsDisplayed()
     }
 
     @Test
-    fun iniciaSesionDemoAdminYNavegaAPanelAdministrador() {
-        composeTestRule.setContent {
-            DuocTheme {
-                AppNavigation(authViewModel = authViewModel)
-            }
-        }
-
-        composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            !authViewModel.cargando.value
-        }
-
-        composeTestRule.onNodeWithText("Correo de demostración")
-            .performScrollTo()
-            .performTextInput("admin@duoc.cl")
-
-        composeTestRule.onNodeWithText("Ingresar en modo demo")
-            .performScrollTo()
-            .performClick()
+    fun iniciaSesionDemoAdminNavegaAPanelAdministradorYCierraSesion() {
+        iniciarDemo("admin@duoc.cl")
 
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
             authViewModel.usuarioActual.value?.rol == RolUsuario.ADMIN
         }
 
         composeTestRule.onNodeWithText("Panel Administrador").assertIsDisplayed()
+
+        composeTestRule.onNodeWithContentDescription("Cerrar sesión").performClick()
+
+        composeTestRule.waitUntil(timeoutMillis = 5_000) {
+            authViewModel.usuarioActual.value == null &&
+                    !authViewModel.cargando.value &&
+                    composeTestRule.onAllNodesWithText("Continuar con Google")
+                        .fetchSemanticsNodes().isNotEmpty()
+        }
+        composeTestRule.onNodeWithText("Continuar con Google").assertIsDisplayed()
     }
 
     @Test
-    fun cerrarSesionDesdeSolicitante_regresaALogin() {
-        composeTestRule.setContent {
-            DuocTheme {
-                AppNavigation(authViewModel = authViewModel)
-            }
-        }
+    fun iniciaSesionDemoValidadorNavegaADashboardInventarioYCierraSesion() {
+        iniciarDemo("digitales@duoc.cl")
 
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            !authViewModel.cargando.value
+            authViewModel.usuarioActual.value?.rol == RolUsuario.VALIDADOR &&
+                    composeTestRule.onAllNodesWithText("Gestionar inventario")
+                        .fetchSemanticsNodes().isNotEmpty()
         }
 
-        composeTestRule.onNodeWithText("Correo de demostración")
-            .performScrollTo()
-            .performTextInput("profesor@duoc.cl")
+        composeTestRule.onNodeWithText("Gestionar inventario").performClick()
 
-        composeTestRule.onNodeWithText("Ingresar en modo demo")
-            .performScrollTo()
-            .performClick()
+        composeTestRule.onNodeWithContentDescription("Volver").performClick()
+
+        composeTestRule.onNodeWithText("Panel de validación").assertIsDisplayed()
+
+        composeTestRule.onNodeWithContentDescription("Cerrar sesión").performClick()
 
         composeTestRule.waitUntil(timeoutMillis = 5_000) {
-            authViewModel.usuarioActual.value != null
+            authViewModel.usuarioActual.value == null &&
+                    !authViewModel.cargando.value &&
+                    composeTestRule.onAllNodesWithText("Continuar con Google")
+                        .fetchSemanticsNodes().isNotEmpty()
         }
-
-        composeTestRule.onNodeWithText("Gestión de Reservas Duoc").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Continuar con Google").assertIsDisplayed()
     }
 }
